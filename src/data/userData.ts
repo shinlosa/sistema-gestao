@@ -15,6 +15,30 @@ export const users: User[] = [
     createdAt: new Date('2024-12-01'),
     lastLogin: new Date('2025-01-05T08:30:00'),
   },
+  {
+    id: 'coord1',
+    username: 'coord.nutricao',
+    password: 'Nutri@123',
+    name: 'Coordenadora Nutrição',
+    email: 'coord.nutricao@unifor.br',
+    role: 'editor',
+    department: 'Nutrição',
+    status: 'active',
+    createdAt: new Date('2024-12-05'),
+    lastLogin: new Date('2025-01-05T07:15:00'),
+  },
+  {
+    id: 'prof1',
+    username: 'flavia.prof',
+    password: 'Prof@456',
+    name: 'Profa. Flávia',
+    email: 'flavia.prof@unifor.br',
+    role: 'viewer',
+    department: 'Nutrição',
+    status: 'active',
+    createdAt: new Date('2024-12-10'),
+    lastLogin: new Date('2025-01-04T14:30:00'),
+  },
 ];
 
 // Função para validar login

@@ -14,6 +14,11 @@ export interface Monitoring {
   serviceType: string;
   allowedPeriods: string[];
   rooms: NAMIRoom[];
+  responsaveis?: Array<{
+    professor: string;
+    salaIds: string[];
+  }>;
+  reservavel?: boolean; // permite reserva do monitoramento inteiro
 }
 
 export interface NAMIRoom {
