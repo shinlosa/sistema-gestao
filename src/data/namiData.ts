@@ -2,19 +2,13 @@ import { TimeSlot, Monitoring, NAMIRoom } from "../types/nami";
 
 // Horários específicos do NAMI
 export const timeSlots: TimeSlot[] = [
-  // Período Matutino
-  { id: 'MA', label: 'M.A', start: '07:30', end: '08:20', period: 'morning' },
-  { id: 'MB', label: 'M.B', start: '08:20', end: '09:10', period: 'morning' },
-  { id: 'MC', label: 'M.C', start: '09:30', end: '10:20', period: 'morning' },
-  { id: 'MD', label: 'M.D', start: '10:20', end: '11:10', period: 'morning' },
-  { id: 'ME', label: 'M.E', start: '11:20', end: '12:10', period: 'morning' },
-  { id: 'MF', label: 'M.F', start: '12:10', end: '13:00', period: 'morning' },
-  
-  // Período Vespertino
-  { id: 'TA', label: 'T.A', start: '13:30', end: '14:20', period: 'afternoon' },
-  { id: 'TB', label: 'T.B', start: '14:20', end: '15:10', period: 'afternoon' },
-  { id: 'TC', label: 'T.C', start: '15:30', end: '16:20', period: 'afternoon' },
-  { id: 'TD', label: 'T.D', start: '16:20', end: '17:10', period: 'afternoon' },
+  // Blocos Matutino
+  { id: 'MAB', label: 'Manhã AB', start: '07:30', end: '09:10', period: 'morning' },
+  { id: 'MCD', label: 'Manhã CD', start: '09:30', end: '11:10', period: 'morning' },
+  { id: 'MEF', label: 'Manhã EF', start: '11:20', end: '13:00', period: 'morning' },
+  // Blocos Vespertino
+  { id: 'TAB', label: 'Tarde AB', start: '13:30', end: '15:10', period: 'afternoon' },
+  { id: 'TCD', label: 'Tarde CD', start: '15:30', end: '17:10', period: 'afternoon' },
 ];
 
 // Estrutura dos monitoramentos
@@ -23,27 +17,69 @@ export const monitorings: Monitoring[] = [
     id: 'mon1',
     name: 'Monitoramento 1',
     serviceType: 'NDC - Atendimento de 1ª vez (Pcte A)',
-    allowedPeriods: ['MA', 'MB', 'MC', 'MD', 'ME', 'MF', 'TA', 'TB', 'TC', 'TD'],
-    rooms: []
+  allowedPeriods: ['MAB', 'MCD', 'MEF', 'TAB', 'TCD'],
+    rooms: [],
+    reservavel: true,
+    responsaveis: [
+      { professor: 'Profa. Flávia', salaIds: ['room1', 'room2'] },
+      { professor: 'Prof. Roberto', salaIds: ['room3', 'room4', 'room5'] }
+    ]
   },
   {
     id: 'mon2',
     name: 'Monitoramento 2',
     serviceType: 'Atendimento Geral',
-    allowedPeriods: ['MA', 'MB', 'MC', 'MD', 'ME', 'MF', 'TA', 'TB', 'TC', 'TD'],
-    rooms: []
+  allowedPeriods: ['MAB', 'MCD', 'MEF', 'TAB', 'TCD'],
+    rooms: [],
+    reservavel: true,
+    responsaveis: [
+      { professor: 'Profa. Lorrainy', salaIds: ['room6', 'room7'] }
+    ]
   },
   {
     id: 'mon3',
     name: 'Monitoramento 3',
     serviceType: 'Atendimento Especializado',
-    allowedPeriods: ['MA', 'MB', 'MC', 'MD', 'ME', 'MF', 'TA', 'TB', 'TC', 'TD'],
-    rooms: []
+  allowedPeriods: ['MAB', 'MCD', 'MEF', 'TAB', 'TCD'],
+    rooms: [],
+    reservavel: true,
+    responsaveis: []
   }
 ];
 
 // Salas do NAMI
 export const namiRooms: NAMIRoom[] = [
+  // Escritórios dos monitoramentos (reserváveis como qualquer sala)
+  {
+    id: 'office_mon1',
+    number: 101,
+    name: 'Escritório Monitoramento 1',
+    monitoringId: 'mon1',
+    capacity: 2,
+    description: 'Sala de escritório do Monitoramento 1, reservável independentemente das salas de aula.',
+    isIndependent: true,
+    available: true
+  },
+  {
+    id: 'office_mon2',
+    number: 102,
+    name: 'Escritório Monitoramento 2',
+    monitoringId: 'mon2',
+    capacity: 2,
+    description: 'Sala de escritório do Monitoramento 2, reservável independentemente das salas de aula.',
+    isIndependent: true,
+    available: true
+  },
+  {
+    id: 'office_mon3',
+    number: 103,
+    name: 'Escritório Monitoramento 3',
+    monitoringId: 'mon3',
+    capacity: 2,
+    description: 'Sala de escritório do Monitoramento 3, reservável independentemente das salas de aula.',
+    isIndependent: true,
+    available: true
+  },
   // Monitoramento 1 - Profa. Lorrainy
   {
     id: 'room1',
@@ -251,7 +287,7 @@ export const namiRooms: NAMIRoom[] = [
   }
 ];
 
-// Organizar salas por monitoramento
-monitorings[0].rooms = namiRooms.filter(room => room.monitoringId === 'mon1');
-monitorings[1].rooms = namiRooms.filter(room => room.monitoringId === 'mon2');
-monitorings[2].rooms = namiRooms.filter(room => room.monitoringId === 'mon3');
+// Organizar salas por monitoramento (excluindo salas independentes)
+monitorings[0].rooms = namiRooms.filter(room => room.monitoringId === 'mon1' && !room.isIndependent);
+monitorings[1].rooms = namiRooms.filter(room => room.monitoringId === 'mon2' && !room.isIndependent);
+monitorings[2].rooms = namiRooms.filter(room => room.monitoringId === 'mon3' && !room.isIndependent);
