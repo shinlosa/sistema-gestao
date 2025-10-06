@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { CalendarDays, Clock, Users } from "lucide-react";
+import { CalendarDays, Clock } from "lucide-react";
+import type { CheckedState } from "@radix-ui/react-checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -34,7 +35,6 @@ export function NAMIBookingModal({
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<string[]>([]);
   const [responsible, setResponsible] = useState("");
   const [serviceType, setServiceType] = useState("");
-  const [participants, setParticipants] = useState(1);
   const [notes, setNotes] = useState("");
 
   // Pré-preencher campos com dados padrão da sala ou da reserva sendo editada
@@ -45,7 +45,6 @@ export function NAMIBookingModal({
       setSelectedTimeSlots(editingBooking.timeSlots);
       setResponsible(editingBooking.responsible);
       setServiceType(editingBooking.serviceType);
-      setParticipants(editingBooking.participants);
       setNotes(editingBooking.notes || "");
     } else if (room) {
       // Nova reserva - preencher com dados padrão da sala
@@ -53,7 +52,6 @@ export function NAMIBookingModal({
       setSelectedTimeSlots([]);
       setResponsible(room.defaultResponsible || "");
       setServiceType(room.defaultServiceType || "");
-      setParticipants(1);
       setNotes("");
     }
   }, [room, editingBooking]);
@@ -93,7 +91,6 @@ export function NAMIBookingModal({
       timeSlots: selectedTimeSlots,
       responsible,
       serviceType,
-      participants,
       notes,
       createdBy: currentUser?.name || "Usuário Desconhecido"
     };
@@ -104,7 +101,6 @@ export function NAMIBookingModal({
     setSelectedTimeSlots([]);
     setResponsible(room.defaultResponsible || "");
     setServiceType(room.defaultServiceType || "");
-    setParticipants(1);
     setNotes("");
     setSelectedDate(new Date());
     onClose();
@@ -167,20 +163,6 @@ export function NAMIBookingModal({
                   value={serviceType}
                   onChange={(e) => setServiceType(e.target.value)}
                   placeholder="Ex: Atendimento de 1ª vez (Pcte A)"
-                  className="border-2 border-blue-200 focus:border-blue-500 bg-white"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="participants">Número de Participantes</Label>
-                <Input
-                  id="participants"
-                  type="number"
-                  min="1"
-                  max={room?.capacity || 25}
-                  value={participants}
-                  onChange={(e) => setParticipants(parseInt(e.target.value))}
                   className="border-2 border-blue-200 focus:border-blue-500 bg-white"
                   required
                 />
@@ -264,8 +246,8 @@ export function NAMIBookingModal({
                                   id={slot.id}
                                   checked={isSelected}
                                   disabled={isOccupied}
-                                  onCheckedChange={(checked) => 
-                                    handleTimeSlotChange(slot.id, checked as boolean)
+                                  onCheckedChange={(checked: CheckedState) => 
+                                    handleTimeSlotChange(slot.id, checked === true)
                                   }
                                 />
                                 <Label 
@@ -319,8 +301,8 @@ export function NAMIBookingModal({
                                   id={slot.id}
                                   checked={isSelected}
                                   disabled={isOccupied}
-                                  onCheckedChange={(checked) => 
-                                    handleTimeSlotChange(slot.id, checked as boolean)
+                                  onCheckedChange={(checked: CheckedState) => 
+                                    handleTimeSlotChange(slot.id, checked === true)
                                   }
                                 />
                                 <Label 

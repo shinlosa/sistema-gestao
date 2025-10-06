@@ -1,4 +1,4 @@
-import { Calendar, Clock, Users, MapPin, MoreVertical, X, Eye, Edit } from "lucide-react";
+import { Calendar, Clock, MoreVertical, X, Eye, Edit } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -107,10 +107,6 @@ export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onVi
                         <span className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
                           {getTimeRange(booking.timeSlots)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Users className="h-4 w-4" />
-                          {booking.participants} pessoas
                         </span>
                       </CardDescription>
                     </div>

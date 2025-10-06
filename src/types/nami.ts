@@ -43,7 +43,6 @@ export interface NAMIBooking {
   timeSlots: string[];
   responsible: string;
   serviceType: string;
-  participants: number;
   notes?: string;
   createdBy: string;
   createdAt: Date;
