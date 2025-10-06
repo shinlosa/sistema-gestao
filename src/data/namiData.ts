@@ -22,7 +22,6 @@ export const monitorings: Monitoring[] = [
   {
     id: 'mon1',
     name: 'Monitoramento 1',
-    responsible: 'Profa. Lorrainy',
     serviceType: 'NDC - Atendimento de 1ª vez (Pcte A)',
     allowedPeriods: ['MA', 'MB', 'MC', 'MD', 'ME', 'MF', 'TA', 'TB', 'TC', 'TD'],
     rooms: []
@@ -30,7 +29,6 @@ export const monitorings: Monitoring[] = [
   {
     id: 'mon2',
     name: 'Monitoramento 2',
-    responsible: 'Profa. Virginia (ESC)',
     serviceType: 'Atendimento Geral',
     allowedPeriods: ['MA', 'MB', 'MC', 'MD', 'ME', 'MF', 'TA', 'TB', 'TC', 'TD'],
     rooms: []
@@ -38,7 +36,6 @@ export const monitorings: Monitoring[] = [
   {
     id: 'mon3',
     name: 'Monitoramento 3',
-    responsible: 'Múltiplos Responsáveis',
     serviceType: 'Atendimento Especializado',
     allowedPeriods: ['MA', 'MB', 'MC', 'MD', 'ME', 'MF', 'TA', 'TB', 'TC', 'TD'],
     rooms: []

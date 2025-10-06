@@ -11,7 +11,6 @@ export interface TimeSlot {
 export interface Monitoring {
   id: string;
   name: string;
-  responsible: string;
   serviceType: string;
   allowedPeriods: string[];
   rooms: NAMIRoom[];
@@ -73,9 +72,9 @@ export interface User {
   password: string;
   name: string;
   email: string;
-  role: 'admin' | 'coordinator' | 'professor' | 'staff';
+  role: 'admin' | 'editor' | 'viewer';
   department?: string;
-  status: 'active' | 'pending' | 'suspended';
+  status: 'active' | 'pending' | 'inactive';
   createdAt: Date;
   lastLogin?: Date;
   requestedBy?: string;

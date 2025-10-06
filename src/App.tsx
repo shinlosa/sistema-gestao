@@ -10,7 +10,7 @@ import { ActivityLog } from "./components/ActivityLog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
 import { Badge } from "./components/ui/badge";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 import { Toaster } from "./components/ui/sonner";
 import { monitorings, namiRooms } from "./data/namiData";
 import { users as initialUsers } from "./data/userData";
