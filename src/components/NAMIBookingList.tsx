@@ -1,5 +1,12 @@
 import { useMemo, useState } from "react";
-import { Calendar, Filter } from "lucide-react";
+import { Calendar as CalendarIcon, Filter } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+// 1. IMPORTAR COMPONENTES NECESSÁRIOS
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Calendar } from "./ui/calendar";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -9,6 +16,7 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { NAMIBooking, TimeSlot } from "../types/nami";
 import { timeSlots } from "../data/namiData";
 
+// ... (funções auxiliares como ensureDate, formatDateDisplay, etc. permanecem as mesmas)
 interface NAMIBookingListProps {
   bookings: NAMIBooking[];
   onCancelBooking: (bookingId: string) => void;
@@ -21,13 +29,6 @@ const ALL_VALUE = "all";
 
 const ensureDate = (value: Date | string): Date =>
   value instanceof Date ? value : new Date(value);
-
-const formatDateKey = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
 
 const formatDateDisplay = (date: Date) =>
   date.toLocaleDateString("pt-BR", {
@@ -88,26 +89,20 @@ const getFirstSlotStart = (booking: NAMIBooking) => {
 };
 
 export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onViewDetails, canManage = true }: NAMIBookingListProps) {
-  const [dateFilter, setDateFilter] = useState<string>(ALL_VALUE);
+  // 2. SUBSTITUIR O ESTADO DO FILTRO DE DATA
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+  
   const [responsibleFilter, setResponsibleFilter] = useState<string>(ALL_VALUE);
   const [serviceTypeFilter, setServiceTypeFilter] = useState<string>(ALL_VALUE);
 
   const hasActiveFilters =
-    dateFilter !== ALL_VALUE ||
+    !!startDate ||
+    !!endDate ||
     responsibleFilter !== ALL_VALUE ||
     serviceTypeFilter !== ALL_VALUE;
 
-  const dateOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    bookings.forEach((booking) => {
-      const date = ensureDate(booking.date);
-      const key = formatDateKey(date);
-      if (!map.has(key)) {
-        map.set(key, `${formatWeekday(date)} · ${formatDateDisplay(date)}`);
-      }
-    });
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [bookings]);
+  // `dateOptions` não é mais necessário e foi removido.
 
   const responsibleOptions = useMemo(() => {
     const set = new Set<string>();
@@ -131,10 +126,21 @@ export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onVi
 
   const filteredBookings = useMemo(() =>
     bookings.filter((booking) => {
-      const date = ensureDate(booking.date);
-      const dateKey = formatDateKey(date);
+      // 3. ATUALIZAR A LÓGICA DE FILTRAGEM DE DATA
+      const bookingDate = ensureDate(booking.date);
+      
+      const matchDate = (() => {
+        // Ignora a parte de hora/minuto para a comparação
+        const bookingDay = new Date(bookingDate.getFullYear(), bookingDate.getMonth(), bookingDate.getDate());
+        
+        const start = startDate ? new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()) : null;
+        const end = endDate ? new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()) : null;
 
-      const matchDate = dateFilter === ALL_VALUE || dateKey === dateFilter;
+        if (start && bookingDay < start) return false;
+        if (end && bookingDay > end) return false;
+        return true;
+      })();
+
       const matchResponsible =
         responsibleFilter === ALL_VALUE || booking.responsible === responsibleFilter;
       const matchServiceType =
@@ -142,7 +148,7 @@ export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onVi
 
       return matchDate && matchResponsible && matchServiceType;
     }),
-  [bookings, dateFilter, responsibleFilter, serviceTypeFilter]);
+  [bookings, startDate, endDate, responsibleFilter, serviceTypeFilter]);
 
   const sortedBookings = useMemo(() =>
     [...filteredBookings].sort((a, b) => {
@@ -165,7 +171,8 @@ export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onVi
   [filteredBookings]);
 
   const clearFilters = () => {
-    setDateFilter(ALL_VALUE);
+    setStartDate(undefined);
+    setEndDate(undefined);
     setResponsibleFilter(ALL_VALUE);
     setServiceTypeFilter(ALL_VALUE);
   };
@@ -173,7 +180,7 @@ export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onVi
   if (bookings.length === 0) {
     return (
       <div className="text-center py-12">
-        <Calendar className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+        <CalendarIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-medium mb-2">Nenhuma reserva encontrada</h3>
         <p className="text-muted-foreground">Ainda não há reservas no sistema.</p>
       </div>
@@ -196,22 +203,48 @@ export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onVi
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 4. SUBSTITUIR O SELECT POR DOIS DATE PICKERS */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-1.5">
-            <Label className="text-xs uppercase text-muted-foreground tracking-wide">Dia</Label>
-            <Select value={dateFilter} onValueChange={setDateFilter}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_VALUE}>Todos os dias</SelectItem>
-                {dateOptions.map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label className="text-xs uppercase text-muted-foreground tracking-wide">Data início</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant={"outline"} className="w-full justify-start text-left font-normal">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, "dd/MM/yyyy") : <span>Selecione a data</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={setStartDate}
+                  initialFocus
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase text-muted-foreground tracking-wide">Data fim</Label>
+             <Popover>
+              <PopoverTrigger asChild>
+                <Button variant={"outline"} className="w-full justify-start text-left font-normal">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, "dd/MM/yyyy") : <span>Selecione a data</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={setEndDate}
+                  initialFocus
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-1.5">
@@ -270,10 +303,11 @@ export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onVi
             </span>
           )}
         </div>
-
+        
+        {/* ... (o resto do seu JSX com a Tabela permanece o mesmo) ... */}
         {sortedBookings.length === 0 ? (
           <div className="text-center py-12 border rounded-lg bg-muted/30">
-            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-medium mb-1">Nenhuma reserva encontrada</h3>
             <p className="text-sm text-muted-foreground">
               Ajuste os filtros para visualizar outros resultados.
