@@ -51,7 +51,7 @@ export function NAMIBookingModal({
       setSelectedDate(new Date());
       setSelectedTimeSlots([]);
       setResponsible(room.defaultResponsible || "");
-      setServiceType(room.defaultServiceType || "");
+      setServiceType("");
       setNotes("");
     }
   }, [room, editingBooking]);
@@ -100,7 +100,7 @@ export function NAMIBookingModal({
     // Reset form
     setSelectedTimeSlots([]);
     setResponsible(room.defaultResponsible || "");
-    setServiceType(room.defaultServiceType || "");
+    setServiceType("");
     setNotes("");
     setSelectedDate(new Date());
     onClose();

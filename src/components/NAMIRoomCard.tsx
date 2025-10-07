@@ -52,13 +52,6 @@ export function NAMIRoomCard({ room, onBooking, currentBookings = [] }: NAMIRoom
           </div>
         )}
 
-        {room.defaultServiceType && (
-          <div className="text-sm">
-            <span className="font-medium">Tipo de Atendimento:</span>
-            <div className="text-muted-foreground mt-1">{room.defaultServiceType}</div>
-          </div>
-        )}
-
         {room.isIndependent && (
           <Badge variant="outline" className="text-xs">
             Sala Independente

@@ -1,8 +1,11 @@
-import { Calendar, Clock, MoreVertical, X, Eye, Edit } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Calendar, Filter } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { Label } from "./ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { NAMIBooking, TimeSlot } from "../types/nami";
 import { timeSlots } from "../data/namiData";
 
@@ -11,66 +14,161 @@ interface NAMIBookingListProps {
   onCancelBooking: (bookingId: string) => void;
   onEditBooking?: (booking: NAMIBooking) => void;
   onViewDetails?: (booking: NAMIBooking) => void;
+  canManage?: boolean;
 }
 
-export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onViewDetails }: NAMIBookingListProps) {
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("pt-BR", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+const ALL_VALUE = "all";
+
+const ensureDate = (value: Date | string): Date =>
+  value instanceof Date ? value : new Date(value);
+
+const formatDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const formatDateDisplay = (date: Date) =>
+  date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
+const formatWeekday = (date: Date) => {
+  const weekday = date.toLocaleDateString("pt-BR", { weekday: "long" });
+  return weekday.charAt(0).toUpperCase() + weekday.slice(1);
+};
+
+const getTimeRange = (slotIds: string[]) => {
+  const slots = slotIds
+    .map((id) => timeSlots.find((slot) => slot.id === id))
+    .filter(Boolean) as TimeSlot[];
+
+  if (slots.length === 0) return "-";
+
+  const sortedSlots = [...slots].sort((a, b) => a.start.localeCompare(b.start));
+  const firstSlot = sortedSlots[0];
+  const lastSlot = sortedSlots[sortedSlots.length - 1];
+
+  return `${firstSlot.start} - ${lastSlot.end}`;
+};
+
+const formatSlotLabels = (slotIds: string[]) =>
+  slotIds
+    .map((id) => timeSlots.find((slot) => slot.id === id))
+    .filter(Boolean)
+    .map((slot) => slot!.label)
+    .join(", ");
+
+const getStatusBadge = (status: NAMIBooking["status"]) => {
+  switch (status) {
+    case "confirmed":
+      return <Badge className="bg-green-100 text-green-800">Confirmada</Badge>;
+    case "pending":
+      return <Badge variant="secondary">Pendente</Badge>;
+    case "cancelled":
+      return <Badge variant="destructive">Cancelada</Badge>;
+    default:
+      return null;
+  }
+};
+
+const getFirstSlotStart = (booking: NAMIBooking) => {
+  const slots = booking.timeSlots
+    .map((id) => timeSlots.find((slot) => slot.id === id))
+    .filter(Boolean) as TimeSlot[];
+
+  if (slots.length === 0) return "24:00";
+
+  return slots.reduce((earliest, slot) =>
+    slot.start < earliest ? slot.start : earliest,
+  slots[0].start);
+};
+
+export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onViewDetails, canManage = true }: NAMIBookingListProps) {
+  const [dateFilter, setDateFilter] = useState<string>(ALL_VALUE);
+  const [responsibleFilter, setResponsibleFilter] = useState<string>(ALL_VALUE);
+  const [serviceTypeFilter, setServiceTypeFilter] = useState<string>(ALL_VALUE);
+
+  const hasActiveFilters =
+    dateFilter !== ALL_VALUE ||
+    responsibleFilter !== ALL_VALUE ||
+    serviceTypeFilter !== ALL_VALUE;
+
+  const dateOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    bookings.forEach((booking) => {
+      const date = ensureDate(booking.date);
+      const key = formatDateKey(date);
+      if (!map.has(key)) {
+        map.set(key, `${formatWeekday(date)} · ${formatDateDisplay(date)}`);
+      }
     });
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [bookings]);
+
+  const responsibleOptions = useMemo(() => {
+    const set = new Set<string>();
+    bookings.forEach((booking) => {
+      if (booking.responsible) {
+        set.add(booking.responsible);
+      }
+    });
+    return Array.from(set.values()).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [bookings]);
+
+  const serviceTypeOptions = useMemo(() => {
+    const set = new Set<string>();
+    bookings.forEach((booking) => {
+      if (booking.serviceType) {
+        set.add(booking.serviceType);
+      }
+    });
+    return Array.from(set.values()).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [bookings]);
+
+  const filteredBookings = useMemo(() =>
+    bookings.filter((booking) => {
+      const date = ensureDate(booking.date);
+      const dateKey = formatDateKey(date);
+
+      const matchDate = dateFilter === ALL_VALUE || dateKey === dateFilter;
+      const matchResponsible =
+        responsibleFilter === ALL_VALUE || booking.responsible === responsibleFilter;
+      const matchServiceType =
+        serviceTypeFilter === ALL_VALUE || booking.serviceType === serviceTypeFilter;
+
+      return matchDate && matchResponsible && matchServiceType;
+    }),
+  [bookings, dateFilter, responsibleFilter, serviceTypeFilter]);
+
+  const sortedBookings = useMemo(() =>
+    [...filteredBookings].sort((a, b) => {
+      const dateA = ensureDate(a.date);
+      const dateB = ensureDate(b.date);
+
+      if (dateA.getTime() !== dateB.getTime()) {
+        return dateA.getTime() - dateB.getTime();
+      }
+
+      const slotA = getFirstSlotStart(a);
+      const slotB = getFirstSlotStart(b);
+
+      if (slotA !== slotB) {
+        return slotA.localeCompare(slotB);
+      }
+
+      return a.roomNumber - b.roomNumber;
+    }),
+  [filteredBookings]);
+
+  const clearFilters = () => {
+    setDateFilter(ALL_VALUE);
+    setResponsibleFilter(ALL_VALUE);
+    setServiceTypeFilter(ALL_VALUE);
   };
-
-  const formatTimeSlots = (slotIds: string[]) => {
-    return slotIds
-      .map(id => timeSlots.find(slot => slot.id === id))
-      .filter(slot => slot)
-      .map(slot => slot!.label)
-      .join(", ");
-  };
-
-  const getTimeRange = (slotIds: string[]) => {
-    const slots = slotIds
-      .map(id => timeSlots.find(slot => slot.id === id))
-      .filter(slot => slot) as TimeSlot[];
-    
-    if (slots.length === 0) return "";
-    
-    const sortedSlots = slots.sort((a, b) => a.start.localeCompare(b.start));
-    const firstSlot = sortedSlots[0];
-    const lastSlot = sortedSlots[sortedSlots.length - 1];
-    
-    return `${firstSlot.start} - ${lastSlot.end}`;
-  };
-
-  const getStatusBadge = (status: NAMIBooking["status"]) => {
-    switch (status) {
-      case "confirmed":
-        return <Badge className="bg-green-100 text-green-800">Confirmada</Badge>;
-      case "pending":
-        return <Badge variant="secondary">Pendente</Badge>;
-      case "cancelled":
-        return <Badge variant="destructive">Cancelada</Badge>;
-      default:
-        return null;
-    }
-  };
-
-  const upcomingBookings = bookings.filter(booking => {
-    const bookingDate = new Date(booking.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return bookingDate >= today && booking.status !== "cancelled";
-  });
-
-  const pastBookings = bookings.filter(booking => {
-    const bookingDate = new Date(booking.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return bookingDate < today || booking.status === "cancelled";
-  });
 
   if (bookings.length === 0) {
     return (
@@ -83,140 +181,213 @@ export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onVi
   }
 
   return (
-    <div className="space-y-8">
-      {upcomingBookings.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Próximas Reservas</h2>
-          <div className="grid gap-4">
-            {upcomingBookings.map((booking) => (
-              <Card key={booking.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <div className="flex items-center justify-center w-6 h-6 bg-primary text-primary-foreground rounded text-xs font-semibold">
-                          {booking.roomNumber}
-                        </div>
-                        {booking.roomName}
-                      </CardTitle>
-                      <CardDescription className="flex flex-wrap items-center gap-4 mt-2">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {formatDate(booking.date)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {getTimeRange(booking.timeSlots)}
-                        </span>
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(booking.status)}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {onViewDetails && (
-                            <DropdownMenuItem onClick={() => onViewDetails(booking)}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              Ver Detalhes
-                            </DropdownMenuItem>
-                          )}
-                          {onEditBooking && booking.status === "confirmed" && (
-                            <DropdownMenuItem onClick={() => onEditBooking(booking)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Editar Reserva
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem 
-                            onClick={() => onCancelBooking(booking.id)}
-                            className="text-destructive"
-                          >
-                            <X className="h-4 w-4 mr-2" />
-                            Cancelar Reserva
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm"><strong>Responsável:</strong> {booking.responsible}</p>
-                        <p className="text-sm"><strong>Tipo de Atendimento:</strong> {booking.serviceType}</p>
-                        <p className="text-sm"><strong>Criado por:</strong> {booking.createdBy}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm"><strong>Horários:</strong></p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {booking.timeSlots.map((slotId) => (
-                            <Badge key={slotId} variant="outline" className="text-xs">
-                              {timeSlots.find(slot => slot.id === slotId)?.label}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    {booking.notes && (
-                      <div className="mt-3 pt-3 border-t">
-                        <p className="text-sm"><strong>Observações:</strong></p>
-                        <p className="text-sm text-muted-foreground mt-1">{booking.notes}</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+    <Card className="shadow-sm border">
+      <CardHeader className="space-y-2">
+        <div className="flex items-center gap-3">
+          <div className="rounded-md bg-blue-100 p-2 text-blue-700">
+            <Filter className="h-5 w-5" />
+          </div>
+          <div>
+            <CardTitle className="text-xl">Visão em planilha das reservas</CardTitle>
+            <CardDescription>
+              Visualize todos os agendamentos em uma grade ampla e refine pelas informações chave.
+            </CardDescription>
           </div>
         </div>
-      )}
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase text-muted-foreground tracking-wide">Dia</Label>
+            <Select value={dateFilter} onValueChange={setDateFilter}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_VALUE}>Todos os dias</SelectItem>
+                {dateOptions.map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      {pastBookings.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Histórico</h2>
-          <div className="grid gap-4">
-            {pastBookings.map((booking) => (
-              <Card key={booking.id} className="opacity-75">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <div className="flex items-center justify-center w-6 h-6 bg-muted text-muted-foreground rounded text-xs font-semibold">
-                          {booking.roomNumber}
-                        </div>
-                        {booking.roomName}
-                      </CardTitle>
-                      <CardDescription className="flex flex-wrap items-center gap-4 mt-2">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {formatDate(booking.date)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {getTimeRange(booking.timeSlots)}
-                        </span>
-                      </CardDescription>
-                    </div>
-                    {getStatusBadge(booking.status)}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-1">
-                    <p className="text-sm"><strong>Responsável:</strong> {booking.responsible}</p>
-                    <p className="text-sm"><strong>Tipo:</strong> {booking.serviceType}</p>
-                    <p className="text-sm"><strong>Horários:</strong> {formatTimeSlots(booking.timeSlots)}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase text-muted-foreground tracking-wide">Professor / Responsável</Label>
+            <Select value={responsibleFilter} onValueChange={setResponsibleFilter}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_VALUE}>Todos os responsáveis</SelectItem>
+                {responsibleOptions.map((responsible) => (
+                  <SelectItem key={responsible} value={responsible}>
+                    {responsible}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase text-muted-foreground tracking-wide">Tipo de atendimento</Label>
+            <Select value={serviceTypeFilter} onValueChange={setServiceTypeFilter}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_VALUE}>Todos os tipos</SelectItem>
+                {serviceTypeOptions.map((serviceType) => (
+                  <SelectItem key={serviceType} value={serviceType}>
+                    {serviceType}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-end">
+            <Button
+              variant={hasActiveFilters ? "outline" : "ghost"}
+              className="w-full"
+              onClick={clearFilters}
+              disabled={!hasActiveFilters}
+            >
+              Limpar filtros
+            </Button>
           </div>
         </div>
-      )}
-    </div>
+
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <Badge variant="secondary" className="text-sm font-medium">
+            Mostrando {sortedBookings.length} de {bookings.length} reservas
+          </Badge>
+          {hasActiveFilters && (
+            <span className="text-xs text-muted-foreground">
+              Filtros ativos aplicados ao resultado.
+            </span>
+          )}
+        </div>
+
+        {sortedBookings.length === 0 ? (
+          <div className="text-center py-12 border rounded-lg bg-muted/30">
+            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-1">Nenhuma reserva encontrada</h3>
+            <p className="text-sm text-muted-foreground">
+              Ajuste os filtros para visualizar outros resultados.
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-lg border shadow-sm">
+            <Table className="min-w-[960px]">
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead>Data</TableHead>
+                  <TableHead>Sala</TableHead>
+                  <TableHead>Horário</TableHead>
+                  <TableHead>Responsável</TableHead>
+                  <TableHead>Tipo de atendimento</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Criado por</TableHead>
+                  <TableHead>Observações</TableHead>
+                  {canManage && <TableHead className="text-right">Ações</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedBookings.map((booking) => {
+                  const date = ensureDate(booking.date);
+                  return (
+                    <TableRow key={booking.id}>
+                      <TableCell className="min-w-[160px]">
+                        <div className="font-medium">{formatDateDisplay(date)}</div>
+                        <div className="text-xs text-muted-foreground capitalize">
+                          {formatWeekday(date)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="min-w-[140px]">
+                        <div className="font-medium">{booking.roomName}</div>
+                        <div className="text-xs text-muted-foreground">Sala {booking.roomNumber}</div>
+                      </TableCell>
+                      <TableCell className="min-w-[180px]">
+                        <div className="font-medium">{getTimeRange(booking.timeSlots)}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatSlotLabels(booking.timeSlots) || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="min-w-[160px]">
+                        <div className="font-medium">{booking.responsible || "-"}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {booking.responsible ? "Responsável" : "Não informado"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="min-w-[180px]">
+                        {booking.serviceType ? (
+                          <Badge variant="outline" className="font-normal">
+                            {booking.serviceType}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Não informado</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="min-w-[120px]">
+                        {getStatusBadge(booking.status)}
+                      </TableCell>
+                      <TableCell className="min-w-[140px]">
+                        <div className="font-medium">{booking.createdBy}</div>
+                      </TableCell>
+                      <TableCell className="max-w-[220px]">
+                        {booking.notes ? (
+                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                            {booking.notes}
+                          </p>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">---</span>
+                        )}
+                      </TableCell>
+                      {canManage && (
+                        <TableCell className="min-w-[200px] text-right">
+                          <div className="flex justify-end flex-wrap gap-2">
+                            {onViewDetails && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onViewDetails(booking)}
+                              >
+                                Ver
+                              </Button>
+                            )}
+                            {onEditBooking && booking.status === "confirmed" && (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => onEditBooking(booking)}
+                              >
+                                Editar
+                              </Button>
+                            )}
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => onCancelBooking(booking.id)}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+              <TableCaption>
+                Use o scroll horizontal para visualizar todas as colunas quando necessário.
+              </TableCaption>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

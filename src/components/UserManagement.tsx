@@ -6,7 +6,7 @@ import { Badge } from "./ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Alert, AlertDescription } from "./ui/alert";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 import { User } from "../types/nami";
 
 interface UserManagementProps {
@@ -22,11 +22,13 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
   const suspendedUsers = users.filter(user => user.status === 'suspended');
 
   const getRoleBadge = (role: User['role']) => {
-    const roleConfig = {
+    const roleConfig: Record<User['role'], { label: string; className: string }> = {
       admin: { label: 'Administrador', className: 'bg-purple-100 text-purple-800' },
       coordinator: { label: 'Coordenador', className: 'bg-blue-100 text-blue-800' },
       professor: { label: 'Professor', className: 'bg-green-100 text-green-800' },
       staff: { label: 'Funcionário', className: 'bg-gray-100 text-gray-800' },
+      editor: { label: 'Editor', className: 'bg-yellow-100 text-yellow-800' },
+      viewer: { label: 'Visualizador', className: 'bg-teal-100 text-teal-800' },
     };
     
     const config = roleConfig[role];
@@ -381,11 +383,23 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
         </TabsContent>
 
         <TabsContent value="active" className="space-y-4 mt-6">
-          <div className="grid gap-4">
-            {activeUsers.map(user => (
-              <UserCard key={user.id} user={user} />
-            ))}
-          </div>
+          {activeUsers.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Nenhum usuário ativo</h3>
+                <p className="text-muted-foreground">
+                  Não há usuários ativos no sistema no momento.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {activeUsers.map(user => (
+                <UserCard key={user.id} user={user} />
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="suspended" className="space-y-4 mt-6">

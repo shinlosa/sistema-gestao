@@ -16,31 +16,23 @@ export const monitorings: Monitoring[] = [
   {
     id: 'mon1',
     name: 'Monitoramento 1',
-    serviceType: 'NDC - Atendimento de 1ª vez (Pcte A)',
-  allowedPeriods: ['MAB', 'MCD', 'MEF', 'TAB', 'TCD'],
+    allowedPeriods: ['MAB', 'MCD', 'MEF', 'TAB', 'TCD'],
     rooms: [],
     reservavel: true,
-    responsaveis: [
-      { professor: 'Profa. Flávia', salaIds: ['room1', 'room2'] },
-      { professor: 'Prof. Roberto', salaIds: ['room3', 'room4', 'room5'] }
-    ]
+    responsaveis: []
   },
   {
     id: 'mon2',
     name: 'Monitoramento 2',
-    serviceType: 'Atendimento Geral',
-  allowedPeriods: ['MAB', 'MCD', 'MEF', 'TAB', 'TCD'],
+    allowedPeriods: ['MAB', 'MCD', 'MEF', 'TAB', 'TCD'],
     rooms: [],
     reservavel: true,
-    responsaveis: [
-      { professor: 'Profa. Lorrainy', salaIds: ['room6', 'room7'] }
-    ]
+    responsaveis: []
   },
   {
     id: 'mon3',
     name: 'Monitoramento 3',
-    serviceType: 'Atendimento Especializado',
-  allowedPeriods: ['MAB', 'MCD', 'MEF', 'TAB', 'TCD'],
+    allowedPeriods: ['MAB', 'MCD', 'MEF', 'TAB', 'TCD'],
     rooms: [],
     reservavel: true,
     responsaveis: []
@@ -49,171 +41,145 @@ export const monitorings: Monitoring[] = [
 
 // Salas do NAMI
 export const namiRooms: NAMIRoom[] = [
-  // Escritórios dos monitoramentos (reserváveis como qualquer sala)
   {
     id: 'office_mon1',
     number: 101,
-    name: 'Escritório Monitoramento 1',
+    name: 'Sala 101',
     monitoringId: 'mon1',
     capacity: 2,
-    description: 'Sala de escritório do Monitoramento 1, reservável independentemente das salas de aula.',
+    description: 'Espaço disponível para reservas administrativas.',
     isIndependent: true,
     available: true
   },
   {
     id: 'office_mon2',
     number: 102,
-    name: 'Escritório Monitoramento 2',
+    name: 'Sala 102',
     monitoringId: 'mon2',
     capacity: 2,
-    description: 'Sala de escritório do Monitoramento 2, reservável independentemente das salas de aula.',
+    description: 'Espaço disponível para reservas administrativas.',
     isIndependent: true,
     available: true
   },
   {
     id: 'office_mon3',
     number: 103,
-    name: 'Escritório Monitoramento 3',
+    name: 'Sala 103',
     monitoringId: 'mon3',
     capacity: 2,
-    description: 'Sala de escritório do Monitoramento 3, reservável independentemente das salas de aula.',
+    description: 'Espaço disponível para reservas administrativas.',
     isIndependent: true,
     available: true
   },
-  // Monitoramento 1 - Profa. Lorrainy
   {
     id: 'room1',
     number: 1,
-    name: 'Sala 1 - NDC',
+    name: 'Sala 1',
     monitoringId: 'mon1',
     capacity: 8,
-    description: 'Sala para atendimento de primeira vez - NDC',
-    defaultResponsible: 'Profa. Lorrainy',
-    defaultServiceType: 'Atendimento de 1ª vez (Pcte A)',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
   {
     id: 'room2',
     number: 2,
-    name: 'Sala 2 - NDC',
+    name: 'Sala 2',
     monitoringId: 'mon1',
     capacity: 8,
-    description: 'Sala para atendimento de primeira vez - NDC',
-    defaultResponsible: 'Profa. Lorrainy',
-    defaultServiceType: 'Atendimento de 1ª vez (Pcte A)',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
   {
     id: 'room3',
     number: 3,
-    name: 'Sala 3 - NDC',
+    name: 'Sala 3',
     monitoringId: 'mon1',
     capacity: 8,
-    description: 'Sala para atendimento de primeira vez - NDC',
-    defaultResponsible: 'Profa. Lorrainy',
-    defaultServiceType: 'Atendimento de 1ª vez (Pcte A)',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
   {
     id: 'room4',
     number: 4,
-    name: 'Sala 4 - NDC',
+    name: 'Sala 4',
     monitoringId: 'mon1',
     capacity: 8,
-    description: 'Sala para atendimento de primeira vez - NDC',
-    defaultResponsible: 'Profa. Lorrainy',
-    defaultServiceType: 'Atendimento de 1ª vez (Pcte A)',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
   {
     id: 'room5',
     number: 5,
-    name: 'Sala 5 - NDC',
+    name: 'Sala 5',
     monitoringId: 'mon1',
     capacity: 8,
-    description: 'Sala para atendimento de primeira vez - NDC',
-    defaultResponsible: 'Profa. Lorrainy',
-    defaultServiceType: 'Atendimento de 1ª vez (Pcte A)',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
 
-  // Monitoramento 2 - Profa. Virginia
   {
     id: 'room6',
     number: 6,
-    name: 'Sala 6 - ESC',
+    name: 'Sala 6',
     monitoringId: 'mon2',
     capacity: 10,
-    description: 'Sala de atendimento geral - ESC',
-    defaultResponsible: 'Profa. Virginia',
-    defaultServiceType: 'Atendimento ESC',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
   {
     id: 'room7',
     number: 7,
-    name: 'Sala 7 - ESC',
+    name: 'Sala 7',
     monitoringId: 'mon2',
     capacity: 10,
-    description: 'Sala de atendimento geral - ESC',
-    defaultResponsible: 'Profa. Virginia',
-    defaultServiceType: 'Atendimento ESC',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
   {
     id: 'room8',
     number: 8,
-    name: 'Sala 8 - ESC',
+    name: 'Sala 8',
     monitoringId: 'mon2',
     capacity: 10,
-    description: 'Sala de atendimento geral - ESC',
-    defaultResponsible: 'Profa. Virginia',
-    defaultServiceType: 'Atendimento ESC',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
   {
     id: 'room9',
     number: 9,
-    name: 'Sala 9 - ESC',
+    name: 'Sala 9',
     monitoringId: 'mon2',
     capacity: 10,
-    description: 'Sala de atendimento geral - ESC',
-    defaultResponsible: 'Profa. Virginia',
-    defaultServiceType: 'Atendimento ESC',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
   {
     id: 'room10',
     number: 10,
-    name: 'Sala 10 - ESC',
+    name: 'Sala 10',
     monitoringId: 'mon2',
     capacity: 10,
-    description: 'Sala de atendimento geral - ESC',
-    defaultResponsible: 'Profa. Virginia',
-    defaultServiceType: 'Atendimento ESC',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
 
-  // Monitoramento 3
   {
     id: 'room11',
     number: 11,
-    name: 'Sala 11 - Nutrição',
+    name: 'Sala 11',
     monitoringId: 'mon3',
     capacity: 6,
-    description: 'Sala de atendimento nutricional',
-    defaultResponsible: 'Nutricionista Ana Claudia',
-    defaultServiceType: 'Atendimento Nutricional',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
@@ -223,21 +189,17 @@ export const namiRooms: NAMIRoom[] = [
     name: 'Sala 14',
     monitoringId: 'mon3',
     capacity: 8,
-    description: 'Sala de atendimento especializado',
-    defaultResponsible: '',
-    defaultServiceType: 'Atendimento Especializado',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
   {
     id: 'room15',
     number: 15,
-    name: 'Sala 15 - Farmácia',
+    name: 'Sala 15',
     monitoringId: 'mon3',
     capacity: 8,
-    description: 'Sala de atendimento farmacêutico',
-    defaultResponsible: 'Profa. Carol',
-    defaultServiceType: 'Atendimento Farmacêutico (ABCD)',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
@@ -247,9 +209,7 @@ export const namiRooms: NAMIRoom[] = [
     name: 'Sala 16',
     monitoringId: 'mon3',
     capacity: 8,
-    description: 'Sala de atendimento especializado',
-    defaultResponsible: '',
-    defaultServiceType: 'Atendimento Especializado',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
@@ -259,29 +219,26 @@ export const namiRooms: NAMIRoom[] = [
     name: 'Sala 17',
     monitoringId: 'mon3',
     capacity: 8,
-    description: 'Sala de atendimento especializado',
-    defaultResponsible: '',
-    defaultServiceType: 'Atendimento Especializado',
+    description: 'Sala disponível para reservas conforme necessidade.',
     isIndependent: false,
     available: true
   },
 
-  // Salas Independentes
   {
     id: 'room12',
     number: 12,
-    name: 'Sala 12 - Independente',
+    name: 'Sala 12',
     capacity: 12,
-    description: 'Sala de uso geral - não vinculada a monitoramento',
+    description: 'Sala independente disponível para reservas.',
     isIndependent: true,
     available: true
   },
   {
     id: 'room13',
     number: 13,
-    name: 'Sala 13 - Auditório',
+    name: 'Sala 13',
     capacity: 25,
-    description: 'Sala especial com capacidade para 25 pessoas - não vinculada a monitoramento',
+    description: 'Sala independente disponível para reservas.',
     isIndependent: true,
     available: true
   }

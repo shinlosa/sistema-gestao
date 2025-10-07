@@ -13,7 +13,6 @@ export const users: User[] = [
     department: 'Tecnologia da Informação',
     status: 'active',
     createdAt: new Date('2024-12-01'),
-    lastLogin: new Date('2025-01-05T08:30:00'),
   },
   {
     id: 'coord1',
@@ -25,7 +24,6 @@ export const users: User[] = [
     department: 'Nutrição',
     status: 'active',
     createdAt: new Date('2024-12-05'),
-    lastLogin: new Date('2025-01-05T07:15:00'),
   },
   {
     id: 'prof1',
@@ -37,7 +35,6 @@ export const users: User[] = [
     department: 'Nutrição',
     status: 'active',
     createdAt: new Date('2024-12-10'),
-    lastLogin: new Date('2025-01-04T14:30:00'),
   },
 ];
 

@@ -1,4 +1,4 @@
-import { Users, Clock, MapPin } from "lucide-react";
+import { Users, Clock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { NAMIRoomCard } from "./NAMIRoomCard";
@@ -44,14 +44,7 @@ export function MonitoringSection({ monitoring, onRoomBooking, bookings = [] }: 
                 <Users className="h-5 w-5 text-blue-600" />
                 {monitoring.name}
               </CardTitle>
-              <div className="mt-2 space-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  <span><strong>Responsável:</strong> {monitoring.responsible}</span>
-                </div>
-                <div>
-                  <strong>Tipo de Atendimento:</strong> {monitoring.serviceType}
-                </div>
+              <div className="mt-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   <span><strong>Períodos Permitidos:</strong> {formatAllowedPeriods()}</span>

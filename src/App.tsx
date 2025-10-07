@@ -31,33 +31,29 @@ export default function App() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [editingBooking, setEditingBooking] = useState<NAMIBooking | null>(null);
   const [bookings, setBookings] = useState<NAMIBooking[]>([]);
-  const [activityLogs, setActivityLogs] = useState<ActivityLogType[]>([
-    {
-      id: "1",
-      userId: "coord1",
-      userName: "Coordenadora Nutrição",
-      action: "Login",
-      details: "Acesso ao sistema realizado com sucesso",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 min atrás
-    },
-    {
-      id: "2",
-      userId: "prof1",
-      userName: "Profa. Lorrainy",
-      action: "Criar Reserva",
-      details: "Reserva criada para Sala 1 - Atendimento de 1ª vez",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2h atrás
-      affectedResource: "Sala 1",
-    },
-  ]);
+  const [activityLogs, setActivityLogs] = useState<ActivityLogType[]>([]);
+
+  const canManageBookings = authState.user?.role === "admin" || authState.user?.role === "editor";
 
   const handleRoomBooking = (room: NAMIRoom) => {
+    if (!canManageBookings) {
+      toast.error("Acesso restrito", {
+        description: "Somente administradores ou editores podem realizar reservas.",
+      });
+      return;
+    }
     setSelectedRoom(room);
     setEditingBooking(null);
     setIsBookingModalOpen(true);
   };
 
   const handleEditBooking = (booking: NAMIBooking) => {
+    if (!canManageBookings) {
+      toast.error("Acesso restrito", {
+        description: "Somente administradores ou editores podem editar reservas.",
+      });
+      return;
+    }
     const room = namiRooms.find(r => r.id === booking.roomId);
     if (room) {
       setSelectedRoom(room);
@@ -73,9 +69,6 @@ export default function App() {
       user,
       loading: false,
     });
-
-    // Log de login
-    addActivityLog("Login", `${user.name} fez login no sistema`);
     
     toast.success(`Bem-vindo(a), ${user.name}!`, {
       description: "Login realizado com sucesso.",
@@ -83,10 +76,6 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    if (authState.user) {
-      addActivityLog("Logout", `${authState.user.name} saiu do sistema`);
-    }
-    
     setAuthState({
       isAuthenticated: false,
       user: null,
@@ -116,6 +105,12 @@ export default function App() {
   };
 
   const handleBookingSubmit = (bookingData: Omit<NAMIBooking, "id" | "status" | "createdAt">) => {
+    if (!canManageBookings) {
+      toast.error("Acesso restrito", {
+        description: "Somente administradores ou editores podem confirmar reservas.",
+      });
+      return;
+    }
     if (editingBooking) {
       // Editando reserva existente
       const updatedBooking: NAMIBooking = {
@@ -166,15 +161,15 @@ export default function App() {
   };
 
   const handleCancelBooking = (bookingId: string) => {
+    if (!canManageBookings) {
+      toast.error("Acesso restrito", {
+        description: "Somente administradores ou editores podem cancelar reservas.",
+      });
+      return;
+    }
     const booking = bookings.find(b => b.id === bookingId);
     
-    setBookings(prev => 
-      prev.map(booking => 
-        booking.id === bookingId 
-          ? { ...booking, status: "cancelled" as const }
-          : booking
-      )
-    );
+    setBookings(prev => prev.filter(booking => booking.id !== bookingId));
     
     // Log da atividade
     if (booking) {
@@ -278,6 +273,7 @@ export default function App() {
               bookings={bookings} 
               onCancelBooking={handleCancelBooking}
               onEditBooking={handleEditBooking}
+              canManage={canManageBookings}
             />
           </div>
         )}

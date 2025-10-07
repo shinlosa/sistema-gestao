@@ -11,7 +11,7 @@ export interface TimeSlot {
 export interface Monitoring {
   id: string;
   name: string;
-  serviceType: string;
+  serviceType?: string;
   allowedPeriods: string[];
   rooms: NAMIRoom[];
   responsaveis?: Array<{
@@ -29,7 +29,6 @@ export interface NAMIRoom {
   capacity: number;
   description: string;
   defaultResponsible?: string;
-  defaultServiceType?: string;
   isIndependent: boolean;
   available: boolean;
 }
@@ -49,17 +48,6 @@ export interface NAMIBooking {
   status: 'confirmed' | 'pending' | 'cancelled';
 }
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'editor' | 'viewer';
-  status: 'active' | 'pending' | 'inactive';
-  createdAt: Date;
-  approvedBy?: string;
-  approvedAt?: Date;
-}
-
 export interface ActivityLog {
   id: string;
   userId: string;
@@ -76,12 +64,14 @@ export interface User {
   password: string;
   name: string;
   email: string;
-  role: 'admin' | 'editor' | 'viewer';
+  role: 'admin' | 'editor' | 'viewer' | 'coordinator' | 'professor' | 'staff';
   department?: string;
-  status: 'active' | 'pending' | 'inactive';
+  status: 'active' | 'pending' | 'inactive' | 'suspended';
   createdAt: Date;
   lastLogin?: Date;
   requestedBy?: string;
+  approvedBy?: string;
+  approvedAt?: Date;
 }
 
 export interface AuthState {
