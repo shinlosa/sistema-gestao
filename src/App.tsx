@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Input } from "./components/ui/input"; 
 import { Header } from "./components/Header";
 import { LoginScreen } from "./components/LoginScreen";
 import { UserManagement } from "./components/UserManagement";
@@ -17,22 +18,20 @@ import { users as initialUsers } from "./data/userData";
 import { NAMIRoom, NAMIBooking, ActivityLog as ActivityLogType, User, AuthState } from "./types/nami";
 
 export default function App() {
-  // Estados de autenticação
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     user: null,
     loading: false,
   });
   const [users, setUsers] = useState<User[]>(initialUsers);
-
-  // Estados da aplicação
   const [activeTab, setActiveTab] = useState("rooms");
   const [selectedRoom, setSelectedRoom] = useState<NAMIRoom | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [editingBooking, setEditingBooking] = useState<NAMIBooking | null>(null);
   const [bookings, setBookings] = useState<NAMIBooking[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLogType[]>([]);
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const [monitoringSearchTerm, setMonitoringSearchTerm] = useState("");
   const canManageBookings = authState.user?.role === "admin" || authState.user?.role === "editor";
 
   const handleRoomBooking = (room: NAMIRoom) => {
@@ -62,7 +61,6 @@ export default function App() {
     }
   };
 
-  // Funções de autenticação
   const handleLogin = (user: User) => {
     setAuthState({
       isAuthenticated: true,
@@ -112,7 +110,6 @@ export default function App() {
       return;
     }
     if (editingBooking) {
-      // Editando reserva existente
       const updatedBooking: NAMIBooking = {
         ...bookingData,
         id: editingBooking.id,
@@ -126,7 +123,6 @@ export default function App() {
         )
       );
       
-      // Log da atividade
       addActivityLog(
         "Editar Reserva",
         `Reserva editada para ${bookingData.roomName} - ${bookingData.serviceType}`,
@@ -137,7 +133,6 @@ export default function App() {
         description: `Sala ${bookingData.roomNumber} atualizada para ${bookingData.date.toLocaleDateString("pt-BR")}`,
       });
     } else {
-      // Criando nova reserva
       const newBooking: NAMIBooking = {
         ...bookingData,
         id: Date.now().toString(),
@@ -147,7 +142,6 @@ export default function App() {
 
       setBookings(prev => [...prev, newBooking]);
       
-      // Log da atividade
       addActivityLog(
         "Criar Reserva",
         `Reserva criada para ${bookingData.roomName} - ${bookingData.serviceType}`,
@@ -171,7 +165,6 @@ export default function App() {
     
     setBookings(prev => prev.filter(booking => booking.id !== bookingId));
     
-    // Log da atividade
     if (booking) {
       addActivityLog(
         "Cancelar Reserva",
@@ -184,6 +177,9 @@ export default function App() {
   };
 
   const independentRooms = namiRooms.filter(room => room.isIndependent);
+  const filteredIndependentRooms = independentRooms.filter(room =>
+    room.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Se não estiver autenticado, mostrar tela de login
   if (!authState.isAuthenticated) {
@@ -215,45 +211,74 @@ export default function App() {
                 <TabsTrigger value="independent">Salas Independentes</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="monitoring" className="space-y-8">
+              <TabsContent value="monitoring" className="pt-4 space-y-6">
+                <Card>
+                    <CardContent className="p-4 flex items-center gap-4">
+                        <label htmlFor="monitoring-search" className="font-semibold whitespace-nowrap">
+                            Buscar:
+                        </label>
+                         <Input
+                            id="monitoring-search"
+                            placeholder="Buscar sala de monitoramentos"
+                            value={monitoringSearchTerm}
+                            onChange={(e) => setMonitoringSearchTerm(e.target.value)}
+                        />
+                    </CardContent>
+                </Card>
+                
                 {monitorings.map((monitoring) => (
                   <MonitoringSection
                     key={monitoring.id}
                     monitoring={monitoring}
                     onRoomBooking={handleRoomBooking}
                     bookings={bookings}
+                    searchTerm={monitoringSearchTerm}
                   />
                 ))}
               </TabsContent>
               
-              <TabsContent value="independent">
-                <div className="space-y-6">
-                  <Card>
-                    <CardHeader>
+              <TabsContent value="independent" className="pt-4 space-y-6">
+                <Card>
+                    <CardContent className="p-4 flex items-center gap-4">
+                        <label htmlFor="independent-search" className="font-semibold whitespace-nowrap">
+                            Buscar:
+                        </label>
+                         <Input
+                            id="independent-search"
+                            placeholder="Buscar sala independente"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </CardContent>
+                </Card>
+              
+                <Card>
+                  <CardHeader>
+                    <div>
                       <CardTitle>Salas Independentes</CardTitle>
                       <CardDescription>
                         Salas não vinculadas a monitoramentos específicos
                       </CardDescription>
-                    </CardHeader>
-                  </Card>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {independentRooms.map((room) => (
-                      <NAMIRoomCard
-                        key={room.id}
-                        room={room}
-                        onBooking={handleRoomBooking}
-                        currentBookings={bookings
-                          .filter(booking => 
-                            booking.roomId === room.id && 
-                            booking.date.toDateString() === new Date().toDateString() &&
-                            booking.status === 'confirmed'
-                          )
-                          .flatMap(booking => booking.timeSlots)
-                        }
-                      />
-                    ))}
-                  </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredIndependentRooms.map((room) => (
+                    <NAMIRoomCard
+                      key={room.id}
+                      room={room}
+                      onBooking={handleRoomBooking}
+                      currentBookings={bookings
+                        .filter(booking => 
+                          booking.roomId === room.id && 
+                          booking.date.toDateString() === new Date().toDateString() &&
+                          booking.status === 'confirmed'
+                        )
+                        .flatMap(booking => booking.timeSlots)
+                      }
+                    />
+                  ))}
                 </div>
               </TabsContent>
             </Tabs>

@@ -1,4 +1,4 @@
-
+import { useState } from "react"; 
 import { Users, UserCheck, UserX, Clock, Mail, Building, Shield, MoreVertical, Check, X, Trash2, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -6,6 +6,7 @@ import { Badge } from "./ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Alert, AlertDescription } from "./ui/alert";
+import { Input } from "./ui/input"; 
 import { toast } from "sonner";
 import { User } from "../types/nami";
 
@@ -17,9 +18,25 @@ interface UserManagementProps {
 
 export function UserManagement({ currentUser, users, onUserUpdate }: UserManagementProps) {
 
-  const activeUsers = users.filter(user => user.status === 'active');
-  const pendingUsers = users.filter(user => user.status === 'pending');
-  const suspendedUsers = users.filter(user => user.status === 'suspended');
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+
+  const searchTermLower = userSearchTerm.toLowerCase();
+
+  const filteredUsers = users.filter(user =>
+    user.name.toLowerCase().includes(searchTermLower) ||
+    user.email.toLowerCase().includes(searchTermLower) ||
+    (user.department || '').toLowerCase().includes(searchTermLower)
+  );
+  
+  const activeUsers = filteredUsers.filter(user => user.status === 'active');
+  const pendingUsers = filteredUsers.filter(user => user.status === 'pending');
+  const suspendedUsers = filteredUsers.filter(user => user.status === 'suspended');
+
+  // As contagens totais devem ser baseadas na lista original, não na filtrada
+  const totalActive = users.filter(u => u.status === 'active').length;
+  const totalPending = users.filter(u => u.status === 'pending').length;
+  const totalSuspended = users.filter(u => u.status === 'suspended').length;
+
 
   const getRoleBadge = (role: User['role']) => {
     const roleConfig: Record<User['role'], { label: string; className: string }> = {
@@ -317,7 +334,7 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
               <UserCheck className="h-5 w-5 text-green-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Usuários Ativos</p>
-                <p className="text-2xl font-semibold">{activeUsers.length}</p>
+                <p className="text-2xl font-semibold">{totalActive}</p>
               </div>
             </div>
           </CardContent>
@@ -329,7 +346,7 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
               <Clock className="h-5 w-5 text-orange-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Pendentes</p>
-                <p className="text-2xl font-semibold">{pendingUsers.length}</p>
+                <p className="text-2xl font-semibold">{totalPending}</p>
               </div>
             </div>
           </CardContent>
@@ -341,29 +358,44 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
               <UserX className="h-5 w-5 text-red-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Suspensos</p>
-                <p className="text-2xl font-semibold">{suspendedUsers.length}</p>
+                <p className="text-2xl font-semibold">{totalSuspended}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
+      
+      <Card>
+        <CardContent className="p-4 flex items-center gap-4">
+            <label htmlFor="user-search" className="font-semibold whitespace-nowrap">
+                Buscar Usuário:
+            </label>
+            <Input
+                id="user-search"
+                placeholder="Por nome, e-mail ou área de trabalho"
+                value={userSearchTerm}
+                onChange={(e) => setUserSearchTerm(e.target.value)}
+            />
+        </CardContent>
+      </Card>
+
 
       <Tabs defaultValue="pending" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="pending" className="relative">
             Pendentes
-            {pendingUsers.length > 0 && (
+            {totalPending > 0 && (
               <Badge className="ml-2 h-5 w-5 p-0 bg-orange-500 text-white text-xs">
-                {pendingUsers.length}
+                {totalPending}
               </Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="active">Ativos</TabsTrigger>
           <TabsTrigger value="suspended">Suspensos</TabsTrigger>
         </TabsList>
-
+        
         <TabsContent value="pending" className="space-y-4 mt-6">
-          {pendingUsers.length === 0 ? (
+          {totalPending === 0 && userSearchTerm.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
                 <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -371,6 +403,12 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
                 <p className="text-muted-foreground">
                   Todas as solicitações de acesso foram processadas.
                 </p>
+              </CardContent>
+            </Card>
+          ) : pendingUsers.length === 0 && userSearchTerm.length > 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                Nenhum usuário pendente encontrado com o termo "{userSearchTerm}".
               </CardContent>
             </Card>
           ) : (
@@ -383,14 +421,13 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
         </TabsContent>
 
         <TabsContent value="active" className="space-y-4 mt-6">
-          {activeUsers.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Nenhum usuário ativo</h3>
-                <p className="text-muted-foreground">
-                  Não há usuários ativos no sistema no momento.
-                </p>
+           {activeUsers.length === 0 ? (
+             <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                {userSearchTerm.length > 0
+                  ? `Nenhum usuário ativo encontrado com o termo "${userSearchTerm}".`
+                  : "Não há usuários ativos no sistema no momento."
+                }
               </CardContent>
             </Card>
           ) : (
@@ -404,13 +441,12 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
 
         <TabsContent value="suspended" className="space-y-4 mt-6">
           {suspendedUsers.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Nenhum usuário suspenso</h3>
-                <p className="text-muted-foreground">
-                  Todos os usuários estão ativos no sistema.
-                </p>
+             <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                 {userSearchTerm.length > 0
+                  ? `Nenhum usuário suspenso encontrado com o termo "${userSearchTerm}".`
+                  : "Não há usuários suspensos no sistema."
+                }
               </CardContent>
             </Card>
           ) : (

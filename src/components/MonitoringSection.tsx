@@ -1,5 +1,5 @@
 import { Users, Clock } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { NAMIRoomCard } from "./NAMIRoomCard";
 import { Monitoring, NAMIRoom, NAMIBooking } from "../types/nami";
@@ -8,9 +8,15 @@ interface MonitoringSectionProps {
   monitoring: Monitoring;
   onRoomBooking: (room: NAMIRoom) => void;
   bookings?: NAMIBooking[];
+  searchTerm: string; // Propriedade para receber o texto do filtro
 }
 
-export function MonitoringSection({ monitoring, onRoomBooking, bookings = [] }: MonitoringSectionProps) {
+export function MonitoringSection({ monitoring, onRoomBooking, bookings = [], searchTerm }: MonitoringSectionProps) {
+  
+  const filteredRooms = monitoring.rooms.filter(room =>
+    room.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const getRoomCurrentBookings = (roomId: string) => {
     const today = new Date();
     return bookings
@@ -52,23 +58,28 @@ export function MonitoringSection({ monitoring, onRoomBooking, bookings = [] }: 
               </div>
             </div>
             <Badge variant="outline">
-              {monitoring.rooms.length} salas
+              {filteredRooms.length} salas encontradas
             </Badge>
           </div>
         </CardHeader>
       </Card>
 
-      {/* Grid de Salas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {monitoring.rooms.map((room) => (
-          <NAMIRoomCard
-            key={room.id}
-            room={room}
-            onBooking={onRoomBooking}
-            currentBookings={getRoomCurrentBookings(room.id)}
-          />
-        ))}
-      </div>
+      {filteredRooms.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredRooms.map((room) => (
+            <NAMIRoomCard
+              key={room.id}
+              room={room}
+              onBooking={onRoomBooking}
+              currentBookings={getRoomCurrentBookings(room.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-4 text-muted-foreground">
+          <p>Nenhuma sala encontrada com o termo "{searchTerm}" neste monitoramento.</p>
+        </div>
+      )}
     </div>
   );
 }
