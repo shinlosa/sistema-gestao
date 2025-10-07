@@ -50,3 +50,7 @@ coverage/
 *.tmp
 *.temp
 .cache/
+
+# Vite cache
+.vite/
+node_modules/.vite/
