@@ -58,9 +58,10 @@ interface NAMIBookingListProps {
   onEditBooking?: (booking: NAMIBooking) => void;
   onViewDetails?: (booking: NAMIBooking) => void;
   canManage?: boolean;
+  onPrint?: () => void;
 }
 
-export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onViewDetails, canManage = true }: NAMIBookingListProps) {
+export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onViewDetails, canManage = true, onPrint }: NAMIBookingListProps) {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
 
@@ -204,6 +205,7 @@ export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onVi
       onEditBooking={onEditBooking}
       onViewDetails={onViewDetails}
       canManage={canManage}
+      onPrint={onPrint}
     />
   );
 }

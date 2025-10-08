@@ -178,6 +178,15 @@ export default function App() {
     toast.success("Reserva cancelada com sucesso!");
   };
 
+  const handlePrintBookingReport = () => {
+    addActivityLog(
+      "Imprimir Relatório",
+      "Relatório de reservas exportado para PDF",
+      "Reservas"
+    );
+    window.print();
+  };
+
   const independentRooms = useMemo(
     () => namiRooms.filter((room) => room.isIndependent),
     [],
@@ -297,6 +306,7 @@ export default function App() {
               onCancelBooking={handleCancelBooking}
               onEditBooking={handleEditBooking}
               canManage={canManageBookings}
+              onPrint={bookings.length > 0 ? handlePrintBookingReport : undefined}
             />
           </div>
         )}

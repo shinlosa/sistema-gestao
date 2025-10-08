@@ -1,4 +1,4 @@
-import { Calendar as CalendarIcon, Filter } from "lucide-react";
+import { Calendar as CalendarIcon, Filter, Printer } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
 import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
@@ -45,6 +45,7 @@ interface NAMIBookingListViewProps {
   onEditBooking?: (booking: NAMIBooking) => void;
   onViewDetails?: (booking: NAMIBooking) => void;
   canManage: boolean;
+  onPrint?: () => void;
 }
 
 const formatDateForButton = (date?: Date) =>
@@ -87,7 +88,13 @@ export function NAMIBookingListView({
   onEditBooking,
   onViewDetails,
   canManage,
+  onPrint,
 }: NAMIBookingListViewProps) {
+  const showPrintButton = Boolean(onPrint && filteredCount > 0);
+  const filterGridClasses = showPrintButton
+    ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-6"
+    : "grid gap-4 sm:grid-cols-2 lg:grid-cols-5";
+
   return (
     <Card className="shadow-sm border">
       <CardHeader className="space-y-2">
@@ -105,7 +112,7 @@ export function NAMIBookingListView({
       </CardHeader>
 
       <CardContent className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className={filterGridClasses}>
           <div className="space-y-1.5">
             <Label className="text-xs uppercase text-muted-foreground tracking-wide">Data início</Label>
             <Popover>
@@ -180,6 +187,22 @@ export function NAMIBookingListView({
               Limpar filtros
             </Button>
           </div>
+
+          {showPrintButton && (
+            <div className="flex items-end justify-end sm:col-span-2 lg:col-span-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="ml-auto"
+                onClick={onPrint}
+                title="Imprimir relatório em PDF"
+              >
+                <Printer className="h-4 w-4" />
+                <span className="sr-only">Imprimir relatório em PDF</span>
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between flex-wrap gap-3">
