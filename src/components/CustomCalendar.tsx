@@ -78,6 +78,7 @@ export function CustomCalendar({ selected, onSelect, disabled, className }: Cust
       {/* Header com navegação do mês */}
       <div className="flex items-center justify-between mb-4">
         <Button
+          type="button"
           variant="outline"
           size="icon"
           onClick={goToPreviousMonth}
@@ -91,6 +92,7 @@ export function CustomCalendar({ selected, onSelect, disabled, className }: Cust
         </h3>
         
         <Button
+          type="button"
           variant="outline"
           size="icon"
           onClick={goToNextMonth}
@@ -118,6 +120,7 @@ export function CustomCalendar({ selected, onSelect, disabled, className }: Cust
           <div key={index} className="h-9 flex items-center justify-center">
             {date ? (
               <Button
+                type="button"
                 variant={isDateSelected(date) ? "default" : "ghost"}
                 size="sm"
                 className={`h-9 w-9 p-0 font-normal ${

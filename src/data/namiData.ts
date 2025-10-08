@@ -44,30 +44,30 @@ export const namiRooms: NAMIRoom[] = [
   {
     id: 'office_mon1',
     number: 101,
-    name: 'Sala 101',
+    name: 'Escritório Monitoramento 1',
     monitoringId: 'mon1',
     capacity: 2,
-    description: 'Espaço disponível para reservas administrativas.',
+    description: 'Sala de escritório independente do Monitoramento 1, disponível para reservas administrativas.',
     isIndependent: true,
     available: true
   },
   {
     id: 'office_mon2',
     number: 102,
-    name: 'Sala 102',
+    name: 'Escritório Monitoramento 2',
     monitoringId: 'mon2',
     capacity: 2,
-    description: 'Espaço disponível para reservas administrativas.',
+    description: 'Sala de escritório independente do Monitoramento 2, disponível para reservas administrativas.',
     isIndependent: true,
     available: true
   },
   {
     id: 'office_mon3',
     number: 103,
-    name: 'Sala 103',
+    name: 'Escritório Monitoramento 3',
     monitoringId: 'mon3',
     capacity: 2,
-    description: 'Espaço disponível para reservas administrativas.',
+    description: 'Sala de escritório independente do Monitoramento 3, disponível para reservas administrativas.',
     isIndependent: true,
     available: true
   },

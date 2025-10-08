@@ -1,11 +1,9 @@
 import { useMemo, useState } from "react";
 import { Calendar as CalendarIcon, Filter } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 // 1. IMPORTAR COMPONENTES NECESSÁRIOS
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Calendar } from "./ui/calendar";
+import { CustomCalendar } from "./CustomCalendar";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -36,6 +34,15 @@ const formatDateDisplay = (date: Date) =>
     month: "2-digit",
     year: "numeric",
   });
+
+const formatDateForButton = (date: Date | undefined) => {
+  if (!date) return null;
+  return date.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
 
 const formatWeekday = (date: Date) => {
   const weekday = date.toLocaleDateString("pt-BR", { weekday: "long" });
@@ -211,16 +218,13 @@ export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onVi
               <PopoverTrigger asChild>
                 <Button variant={"outline"} className="w-full justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {startDate ? format(startDate, "dd/MM/yyyy") : <span>Selecione a data</span>}
+                  {startDate ? formatDateForButton(startDate) : <span>Selecione a data</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
+                <CustomCalendar
                   selected={startDate}
                   onSelect={setStartDate}
-                  initialFocus
-                  locale={ptBR}
                 />
               </PopoverContent>
             </Popover>
@@ -232,16 +236,13 @@ export function NAMIBookingList({ bookings, onCancelBooking, onEditBooking, onVi
               <PopoverTrigger asChild>
                 <Button variant={"outline"} className="w-full justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {endDate ? format(endDate, "dd/MM/yyyy") : <span>Selecione a data</span>}
+                  {endDate ? formatDateForButton(endDate) : <span>Selecione a data</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
+                <CustomCalendar
                   selected={endDate}
                   onSelect={setEndDate}
-                  initialFocus
-                  locale={ptBR}
                 />
               </PopoverContent>
             </Popover>

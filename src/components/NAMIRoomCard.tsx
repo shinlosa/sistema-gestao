@@ -52,11 +52,18 @@ export function NAMIRoomCard({ room, onBooking, currentBookings = [] }: NAMIRoom
           </div>
         )}
 
-        {room.isIndependent && (
-          <Badge variant="outline" className="text-xs">
-            Sala Independente
-          </Badge>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {room.isIndependent && (
+            <Badge variant="outline" className="text-xs border-blue-300 text-blue-700">
+              Sala Independente
+            </Badge>
+          )}
+          {room.name.startsWith('Escritório Monitoramento') && (
+            <Badge className="text-xs bg-purple-100 text-purple-700 hover:bg-purple-200">
+              Monitoramento
+            </Badge>
+          )}
+        </div>
 
         {hasCurrentBookings && (
           <div className="text-sm">
