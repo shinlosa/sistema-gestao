@@ -1,4 +1,3 @@
-
 import { User } from "../types/nami";
 
 // Apenas a conta admin tem acesso inicial ao sistema

@@ -1,15 +1,17 @@
-import { useState } from "react";
-import { Input } from "./components/ui/input"; 
-import { Header } from "./components/Header";
-import { LoginScreen } from "./components/LoginScreen";
-import { UserManagement } from "./components/UserManagement";
-import { MonitoringSection } from "./components/MonitoringSection";
-import { NAMIRoomCard } from "./components/NAMIRoomCard";
-import { NAMIBookingModal } from "./components/NAMIBookingModal";
-import { NAMIBookingList } from "./components/NAMIBookingList";
-import { ActivityLog } from "./components/ActivityLog";
+import { useMemo, useState } from "react";
+import {
+  Header,
+  LoginScreen,
+  UserManagement,
+  MonitoringSection,
+  NAMIRoomCard,
+  NAMIBookingModal,
+  NAMIBookingList,
+  ActivityLog,
+  SearchInputCard,
+} from "./features";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
 import { Badge } from "./components/ui/badge";
 import { toast } from "sonner";
 import { Toaster } from "./components/ui/sonner";
@@ -176,10 +178,18 @@ export default function App() {
     toast.success("Reserva cancelada com sucesso!");
   };
 
-  const independentRooms = namiRooms.filter(room => room.isIndependent);
-  const filteredIndependentRooms = independentRooms.filter(room =>
-    room.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const independentRooms = useMemo(
+    () => namiRooms.filter((room) => room.isIndependent),
+    [],
   );
+
+  const filteredIndependentRooms = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return independentRooms;
+    return independentRooms.filter((room) =>
+      room.name.toLowerCase().includes(query),
+    );
+  }, [independentRooms, searchTerm]);
 
   // Se não estiver autenticado, mostrar tela de login
   if (!authState.isAuthenticated) {
@@ -212,19 +222,13 @@ export default function App() {
               </TabsList>
               
               <TabsContent value="monitoring" className="pt-4 space-y-6">
-                <Card>
-                    <CardContent className="p-4 flex items-center gap-4">
-                        <label htmlFor="monitoring-search" className="font-semibold whitespace-nowrap">
-                            Buscar:
-                        </label>
-                         <Input
-                            id="monitoring-search"
-                            placeholder="Buscar sala de monitoramentos"
-                            value={monitoringSearchTerm}
-                            onChange={(e) => setMonitoringSearchTerm(e.target.value)}
-                        />
-                    </CardContent>
-                </Card>
+                <SearchInputCard
+                  id="monitoring-search"
+                  label="Buscar:"
+                  placeholder="Buscar sala de monitoramentos"
+                  value={monitoringSearchTerm}
+                  onValueChange={setMonitoringSearchTerm}
+                />
                 
                 {monitorings.map((monitoring) => (
                   <MonitoringSection
@@ -238,19 +242,13 @@ export default function App() {
               </TabsContent>
               
               <TabsContent value="independent" className="pt-4 space-y-6">
-                <Card>
-                    <CardContent className="p-4 flex items-center gap-4">
-                        <label htmlFor="independent-search" className="font-semibold whitespace-nowrap">
-                            Buscar:
-                        </label>
-                         <Input
-                            id="independent-search"
-                            placeholder="Buscar sala independente"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </CardContent>
-                </Card>
+                <SearchInputCard
+                  id="independent-search"
+                  label="Buscar:"
+                  placeholder="Buscar sala independente"
+                  value={searchTerm}
+                  onValueChange={setSearchTerm}
+                />
               
                 <Card>
                   <CardHeader>
