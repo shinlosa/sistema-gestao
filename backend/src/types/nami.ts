@@ -1,11 +1,9 @@
-// Tipos específicos para o sistema NAMI
-
 export interface TimeSlot {
   id: string;
   label: string;
   start: string;
   end: string;
-  period: 'morning' | 'afternoon';
+  period: "morning" | "afternoon";
 }
 
 export interface Monitoring {
@@ -18,7 +16,7 @@ export interface Monitoring {
     professor: string;
     salaIds: string[];
   }>;
-  reservavel?: boolean; // permite reserva do monitoramento inteiro
+  reservavel?: boolean;
 }
 
 export interface NAMIRoom {
@@ -38,14 +36,14 @@ export interface NAMIBooking {
   roomId: string;
   roomNumber: number;
   roomName: string;
-  date: Date;
+  date: string;
   timeSlots: string[];
   responsible: string;
   serviceType: string;
   notes?: string;
   createdBy: string;
-  createdAt: Date;
-  status: 'confirmed' | 'pending' | 'cancelled';
+  createdAt: string;
+  status: "confirmed" | "pending" | "cancelled";
 }
 
 export interface ActivityLog {
@@ -54,29 +52,32 @@ export interface ActivityLog {
   userName: string;
   action: string;
   details: string;
-  timestamp: Date;
+  timestamp: string;
   affectedResource?: string;
 }
+
+export type UserRole =
+  | "admin"
+  | "editor"
+  | "viewer"
+  | "coordinator"
+  | "professor"
+  | "staff";
+
+export type UserStatus = "active" | "pending" | "inactive" | "suspended";
 
 export interface User {
   id: string;
   username: string;
-  password?: string;
+  password: string;
   name: string;
   email: string;
-  role: 'admin' | 'editor' | 'viewer' | 'coordinator' | 'professor' | 'staff';
+  role: UserRole;
   department?: string;
-  status: 'active' | 'pending' | 'inactive' | 'suspended';
-  createdAt: Date;
-  lastLogin?: Date;
+  status: UserStatus;
+  createdAt: string;
+  lastLogin?: string;
   requestedBy?: string;
   approvedBy?: string;
-  approvedAt?: Date;
-}
-
-export interface AuthState {
-  isAuthenticated: boolean;
-  user: User | null;
-  loading: boolean;
-  token?: string;
+  approvedAt?: string;
 }

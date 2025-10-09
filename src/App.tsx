@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Header,
   LoginScreen,
@@ -12,12 +12,26 @@ import {
 } from "./features";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { Card, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
-import { Badge } from "./components/ui/badge";
+import { Alert, AlertDescription } from "./components/ui/alert";
 import { toast } from "sonner";
 import { Toaster } from "./components/ui/sonner";
-import { monitorings, namiRooms } from "./data/namiData";
-import { users as initialUsers } from "./data/userData";
-import { NAMIRoom, NAMIBooking, ActivityLog as ActivityLogType, User, AuthState } from "./types/nami";
+import { monitorings as fallbackMonitorings, namiRooms as fallbackRooms } from "./data/namiData";
+import { users as fallbackUsers } from "./data/userData";
+import { NAMIRoom, NAMIBooking, ActivityLog as ActivityLogType, User, AuthState, Monitoring } from "./types/nami";
+import { api, ApiError, type ApiBooking, type ApiUser } from "./lib/api";
+
+const mapUserFromApi = (user: ApiUser): User => ({
+  ...user,
+  createdAt: new Date(user.createdAt),
+  lastLogin: user.lastLogin ? new Date(user.lastLogin) : undefined,
+  approvedAt: user.approvedAt ? new Date(user.approvedAt) : undefined,
+});
+
+const mapBookingFromApi = (booking: ApiBooking): NAMIBooking => ({
+  ...booking,
+  date: new Date(booking.date),
+  createdAt: new Date(booking.createdAt),
+});
 
 export default function App() {
   const [authState, setAuthState] = useState<AuthState>({
@@ -25,7 +39,14 @@ export default function App() {
     user: null,
     loading: false,
   });
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>(() => fallbackUsers.map((user) => ({ ...user })));
+  const [monitorings, setMonitorings] = useState<Monitoring[]>(() =>
+    fallbackMonitorings.map((monitoring) => ({
+      ...monitoring,
+      rooms: monitoring.rooms.map((room) => ({ ...room })),
+    })),
+  );
+  const [rooms, setRooms] = useState<NAMIRoom[]>(() => fallbackRooms.map((room) => ({ ...room })));
   const [activeTab, setActiveTab] = useState("rooms");
   const [selectedRoom, setSelectedRoom] = useState<NAMIRoom | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -34,7 +55,40 @@ export default function App() {
   const [activityLogs, setActivityLogs] = useState<ActivityLogType[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [monitoringSearchTerm, setMonitoringSearchTerm] = useState("");
+  const [isDataLoading, setIsDataLoading] = useState(false);
+  const [dataError, setDataError] = useState<string | null>(null);
   const canManageBookings = authState.user?.role === "admin" || authState.user?.role === "editor";
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsDataLoading(true);
+      try {
+        const [monitoringsResponse, roomsResponse, bookingsResponse, usersResponse] = await Promise.all([
+          api.getMonitorings(),
+          api.getRooms(),
+          api.getBookings(),
+          api.getUsers(),
+        ]);
+
+        setMonitorings(monitoringsResponse.monitorings);
+        setRooms(roomsResponse.rooms);
+        setBookings(bookingsResponse.bookings.map(mapBookingFromApi));
+        setUsers(usersResponse.users.map(mapUserFromApi));
+        setDataError(null);
+      } catch (error) {
+        console.error("Erro ao carregar dados do backend", error);
+        if (error instanceof ApiError) {
+          setDataError(error.message);
+        } else {
+          setDataError("Não foi possível carregar dados do servidor. Utilizando dados locais.");
+        }
+      } finally {
+        setIsDataLoading(false);
+      }
+    };
+
+    loadData().catch((error) => console.error("Falha inesperada ao carregar dados", error));
+  }, []);
 
   const handleRoomBooking = (room: NAMIRoom) => {
     if (!canManageBookings) {
@@ -55,7 +109,7 @@ export default function App() {
       });
       return;
     }
-    const room = namiRooms.find(r => r.id === booking.roomId);
+  const room = rooms.find((candidate) => candidate.id === booking.roomId);
     if (room) {
       setSelectedRoom(room);
       setEditingBooking(booking);
@@ -63,12 +117,14 @@ export default function App() {
     }
   };
 
-  const handleLogin = (user: User) => {
+  const handleLogin = (user: User, token: string) => {
     setAuthState({
       isAuthenticated: true,
       user,
+      token,
       loading: false,
     });
+    localStorage.setItem("nami-auth-token", token);
     
     toast.success(`Bem-vindo(a), ${user.name}!`, {
       description: "Login realizado com sucesso.",
@@ -76,9 +132,11 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("nami-auth-token");
     setAuthState({
       isAuthenticated: false,
       user: null,
+      token: undefined,
       loading: false,
     });
     
@@ -188,8 +246,8 @@ export default function App() {
   };
 
   const independentRooms = useMemo(
-    () => namiRooms.filter((room) => room.isIndependent),
-    [],
+    () => rooms.filter((room) => room.isIndependent),
+    [rooms],
   );
 
   const filteredIndependentRooms = useMemo(() => {
@@ -215,6 +273,18 @@ export default function App() {
       />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {isDataLoading && (
+          <Alert className="mb-6 border-blue-200 bg-blue-50 text-blue-900">
+            <AlertDescription>Sincronizando dados com o servidor...</AlertDescription>
+          </Alert>
+        )}
+
+        {dataError && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>{dataError}</AlertDescription>
+          </Alert>
+        )}
+
         {activeTab === "rooms" && (
           <div className="space-y-8">
             <div className="mb-8">

@@ -5,11 +5,11 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Alert, AlertDescription } from "../../components/ui/alert";
-import { validateLogin } from "../../data/userData";
 import { User as UserType } from "../../types/nami";
+import { ApiError, api } from "../../lib/api";
 
 interface LoginScreenProps {
-  onLogin: (user: UserType) => void;
+  onLogin: (user: UserType, token: string) => void;
 }
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
@@ -24,20 +24,25 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     setError("");
     setIsLoading(true);
 
-    // Simular delay de autenticação
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const { user, token } = await api.login(username, password);
+      const authenticatedUser: UserType = {
+        ...user,
+        createdAt: new Date(user.createdAt),
+        lastLogin: user.lastLogin ? new Date(user.lastLogin) : new Date(),
+        approvedAt: user.approvedAt ? new Date(user.approvedAt) : undefined,
+      };
 
-    const user = validateLogin(username, password);
-
-    if (user) {
-      // Atualizar último login
-      user.lastLogin = new Date();
-      onLogin(user);
-    } else {
-      setError("Credenciais inválidas. Verifique seu usuário e senha.");
+      onLogin(authenticatedUser, token);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setError("Credenciais inválidas. Verifique seu usuário e senha.");
+      } else {
+        setError("Não foi possível conectar ao servidor. Tente novamente em instantes.");
+      }
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
