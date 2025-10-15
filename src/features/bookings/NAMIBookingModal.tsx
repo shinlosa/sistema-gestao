@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { CalendarDays, Clock } from "lucide-react";
 import type { CheckedState } from "@radix-ui/react-checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../components/ui/dialog";
@@ -39,11 +39,11 @@ export function NAMIBookingModal({
 
   useEffect(() => {
     if (editingBooking) {
-      setSelectedDate(editingBooking.date);
-      setSelectedTimeSlots(editingBooking.timeSlots);
+      setSelectedDate(new Date(editingBooking.date));
+      setSelectedTimeSlots([...editingBooking.timeSlots].sort());
       setResponsible(editingBooking.responsible);
       setServiceType(editingBooking.serviceType);
-      setNotes(editingBooking.notes || "");
+      setNotes(editingBooking.notes ?? "");
     } else if (room) {
       setSelectedDate(new Date());
       setSelectedTimeSlots([]);
@@ -73,10 +73,71 @@ export function NAMIBookingModal({
     }
   };
 
+  const normalizedSelectedSlots = useMemo(() => [...selectedTimeSlots].sort(), [selectedTimeSlots]);
+
+  const originalBookingSnapshot = useMemo(() => {
+    if (!editingBooking) {
+      return null;
+    }
+
+    return {
+      dateString: editingBooking.date.toDateString(),
+      timeSlots: [...editingBooking.timeSlots].sort(),
+      responsible: editingBooking.responsible,
+      serviceType: editingBooking.serviceType,
+      notes: editingBooking.notes ?? "",
+    };
+  }, [editingBooking]);
+
+  const hasChanges = useMemo(() => {
+    if (!editingBooking || !originalBookingSnapshot) {
+      return true;
+    }
+
+    const dateChanged = selectedDate ? selectedDate.toDateString() !== originalBookingSnapshot.dateString : true;
+
+    const slotsChanged = (() => {
+      const originalSlots = originalBookingSnapshot.timeSlots;
+      if (originalSlots.length !== normalizedSelectedSlots.length) {
+        return true;
+      }
+
+      return originalSlots.some((slot, index) => slot !== normalizedSelectedSlots[index]);
+    })();
+
+    const responsibleChanged = responsible !== originalBookingSnapshot.responsible;
+    const serviceTypeChanged = serviceType !== originalBookingSnapshot.serviceType;
+    const notesChanged = notes !== originalBookingSnapshot.notes;
+
+    return dateChanged || slotsChanged || responsibleChanged || serviceTypeChanged || notesChanged;
+  }, [editingBooking, normalizedSelectedSlots, originalBookingSnapshot, notes, responsible, selectedDate, serviceType]);
+
+  const isFormValid = useMemo(() => {
+    if (!room || !selectedDate) {
+      return false;
+    }
+
+    if (normalizedSelectedSlots.length === 0) {
+      return false;
+    }
+
+    if (!responsible.trim()) {
+      return false;
+    }
+
+    if (!serviceType.trim()) {
+      return false;
+    }
+
+    return true;
+  }, [normalizedSelectedSlots, responsible, room, selectedDate, serviceType]);
+
+  const canSubmit = isFormValid && (!editingBooking || hasChanges);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedDate || selectedTimeSlots.length === 0 || !responsible || !serviceType || !room) {
+    if (!canSubmit || !room || !selectedDate) {
       return;
     }
 
@@ -85,7 +146,7 @@ export function NAMIBookingModal({
       roomNumber: room.number,
       roomName: room.name,
       date: selectedDate,
-      timeSlots: selectedTimeSlots,
+      timeSlots: normalizedSelectedSlots,
       responsible,
       serviceType,
       notes,
@@ -327,7 +388,7 @@ export function NAMIBookingModal({
             <Button type="button" variant="outline" onClick={onClose} size="lg">
               Cancelar
             </Button>
-            <Button type="submit" disabled={selectedTimeSlots.length === 0} size="lg">
+            <Button type="submit" disabled={!canSubmit} size="lg">
               {editingBooking ? "Atualizar Reserva" : "Confirmar Reserva"}
             </Button>
           </div>

@@ -2,11 +2,13 @@ import cors, { CorsOptions } from "cors";
 import express from "express";
 import helmet from "helmet";
 import { environment } from "./config/environment.js";
+import { errorHandler, notFoundHandler, requestLogger } from "./middleware/index.js";
 import { appRouter } from "./routes/index.js";
 
 const app = express();
 
 app.use(helmet());
+app.use(requestLogger);
 const allowedOrigins = new Set<string>();
 
 for (const entry of environment.corsOrigins) {
@@ -59,5 +61,8 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use("/api", appRouter);
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export { app };

@@ -1,4 +1,6 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
+import { bookingService } from "../services/bookingService.js";
+import { createBookingSchema, updateBookingSchema } from "../schemas/bookingSchemas.js";
 import { namiService } from "../services/namiService.js";
 
 export const namiController = {
@@ -19,4 +21,64 @@ export const namiController = {
     return response.json({ bookings });
   },
   listTimeSlots: (_request: Request, response: Response) => response.json({ timeSlots: namiService.listTimeSlots() }),
+  createBooking: (request: Request, response: Response, next: NextFunction) => {
+    const parseResult = createBookingSchema.safeParse(request.body);
+
+    if (!parseResult.success) {
+      const { fieldErrors } = parseResult.error.flatten();
+      return response.status(400).json({
+        message: "Dados inválidos",
+        errors: fieldErrors,
+      });
+    }
+
+    try {
+      const actor = {
+        id: request.user?.id ?? "",
+        name: request.user?.name ?? "",
+      };
+      const booking = bookingService.createBooking(parseResult.data, actor);
+      return response.status(201).json({ booking });
+    } catch (error) {
+      return next(error);
+    }
+  },
+  updateBooking: (request: Request, response: Response, next: NextFunction) => {
+    const parseResult = updateBookingSchema.safeParse(request.body);
+
+    if (!parseResult.success) {
+      const { fieldErrors } = parseResult.error.flatten();
+      return response.status(400).json({
+        message: "Dados inválidos",
+        errors: fieldErrors,
+      });
+    }
+
+    const { bookingId } = request.params;
+
+    try {
+      const actor = {
+        id: request.user?.id ?? "",
+        name: request.user?.name ?? "",
+      };
+      const booking = bookingService.updateBooking(bookingId, parseResult.data, actor);
+      return response.status(200).json({ booking });
+    } catch (error) {
+      return next(error);
+    }
+  },
+  cancelBooking: (request: Request, response: Response, next: NextFunction) => {
+    const { bookingId } = request.params;
+
+    try {
+      const actor = {
+        id: request.user?.id ?? "",
+        name: request.user?.name ?? "",
+      };
+  void bookingService.cancelBooking(bookingId, actor);
+      return response.status(204).send();
+    } catch (error) {
+      return next(error);
+    }
+  },
 };

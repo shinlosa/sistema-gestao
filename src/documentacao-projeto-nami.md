@@ -7,10 +7,10 @@
 **Curso:** Nutrição  
 **Tipo:** Projeto de Extensão - Desenvolvimento Web  
 
-**Stack Tecnológica:**
-- **Frontend:** Angular.js + Bootstrap
-- **Backend:** Node.js + Express
-- **Banco de Dados:** MySQL
+**Stack Tecnológica (Atualizada em Outubro/2025):**
+- **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS + ShadCN/UI
+- **Backend:** Node.js (Express + Zod, TypeScript)
+- **Banco de Dados:** Em memória (mock); integração planejada com MySQL
 
 ---
 
@@ -56,8 +56,9 @@ Desenvolver uma solução web para automatizar o processo de reserva de salas do
 #### **SALAS INDEPENDENTES** (Não vinculadas a monitoramentos)
 - **Sala 12:** Uso geral
 - **Sala 13:** Capacidade especial (25 lugares)
+- **Sala 18:** Dedicada a reuniões especiais e demandas administrativas
 
-**TOTAL GERAL:** 17 salas (15 em monitoramentos + 2 independentes)
+**TOTAL GERAL:** 18 salas (15 em monitoramentos + 3 independentes)
 
 ---
 
@@ -79,7 +80,6 @@ Desenvolver uma solução web para automatizar o processo de reserva de salas do
 
 ### **Flexibilidade de Reserva:**
 - Períodos completos (ex: AB manhã completo: 07:30 - 09:10)
-- Períodos fracionados (ex: apenas B manhã: 08:20 - 09:10)
 - Reserva de blocos específicos conforme necessidade
 
 ---

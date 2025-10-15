@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { namiController } from "../controllers/namiController.js";
+import { authenticate, requireRole } from "../middleware/index.js";
 
 const namiRouter = Router();
+
+namiRouter.use(authenticate);
 
 namiRouter.get("/monitorings", namiController.listMonitorings);
 namiRouter.get("/rooms", namiController.listRooms);
@@ -9,5 +12,8 @@ namiRouter.get("/rooms/:roomId", namiController.getRoom);
 namiRouter.get("/rooms/:roomId/bookings", namiController.getBookingsByRoom);
 namiRouter.get("/bookings", namiController.listBookings);
 namiRouter.get("/time-slots", namiController.listTimeSlots);
+namiRouter.post("/bookings", requireRole(["admin", "editor"]), namiController.createBooking);
+namiRouter.put("/bookings/:bookingId", requireRole(["admin", "editor"]), namiController.updateBooking);
+namiRouter.delete("/bookings/:bookingId", requireRole(["admin", "editor"]), namiController.cancelBooking);
 
 export { namiRouter };

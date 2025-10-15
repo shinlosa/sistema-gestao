@@ -1,11 +1,11 @@
-import { bookings, monitorings, namiRooms, timeSlots } from "../data/namiData.js";
-import { NAMIBooking, NAMIRoom } from "../types/nami.js";
+import { bookingRepository, monitoringRepository, roomRepository, timeSlotRepository } from "../repositories/index.js";
+import { NAMIBooking, NAMIRoom, TimeSlot, Monitoring } from "../types/nami.js";
 
 export const namiService = {
-  listTimeSlots: () => timeSlots,
-  listMonitorings: () => monitorings,
-  listRooms: () => namiRooms,
-  getRoomById: (roomId: string): NAMIRoom | undefined => namiRooms.find((room) => room.id === roomId),
-  listBookings: () => bookings,
-  getBookingsByRoom: (roomId: string): NAMIBooking[] => bookings.filter((booking) => booking.roomId === roomId),
+  listTimeSlots: (): TimeSlot[] => timeSlotRepository.list(),
+  listMonitorings: (): Monitoring[] => monitoringRepository.list(),
+  listRooms: (): NAMIRoom[] => roomRepository.list(),
+  getRoomById: (roomId: string): NAMIRoom | undefined => roomRepository.findById(roomId),
+  listBookings: (): NAMIBooking[] => bookingRepository.list(),
+  getBookingsByRoom: (roomId: string): NAMIBooking[] => bookingRepository.listByRoom(roomId),
 };

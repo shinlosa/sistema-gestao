@@ -220,21 +220,22 @@ export function NAMIBookingListView({
           </div>
         ) : (
           <div className="rounded-lg border shadow-sm">
-            <Table className="min-w-[960px]">
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead>Data</TableHead>
-                  <TableHead>Sala</TableHead>
-                  <TableHead>Horário</TableHead>
-                  <TableHead>Responsável</TableHead>
-                  <TableHead>Tipo de atendimento</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Criado por</TableHead>
-                  <TableHead>Observações</TableHead>
-                  {canManage && <TableHead className="text-right">Ações</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <div className="overflow-x-auto">
+              <Table className="w-full min-w-[960px]">
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead>Data</TableHead>
+                    <TableHead>Sala</TableHead>
+                    <TableHead>Horário</TableHead>
+                    <TableHead>Responsável</TableHead>
+                    <TableHead>Tipo de atendimento</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Criado por</TableHead>
+                    <TableHead>Observações</TableHead>
+                    {canManage && <TableHead className="text-right">Ações</TableHead>}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                 {rows.map((row) => (
                   <TableRow key={row.booking.id}>
                     <TableCell className="min-w-[160px]">
@@ -247,7 +248,9 @@ export function NAMIBookingListView({
                     </TableCell>
                     <TableCell className="min-w-[180px]">
                       <div className="font-medium">{row.timeRange}</div>
-                      <div className="text-xs text-muted-foreground">{row.timeSlotLabels || "-"}</div>
+                      <div className="text-xs text-muted-foreground whitespace-normal break-words">
+                        {row.timeSlotLabels || "-"}
+                      </div>
                     </TableCell>
                     <TableCell className="min-w-[160px]">
                       <div className="font-medium">{row.responsible || "-"}</div>
@@ -268,16 +271,18 @@ export function NAMIBookingListView({
                     <TableCell className="min-w-[140px]">
                       <div className="font-medium">{row.createdBy}</div>
                     </TableCell>
-                    <TableCell className="max-w-[220px]">
+                    <TableCell className="max-w-[220px] align-top">
                       {row.notes ? (
-                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{row.notes}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed break-words">
+                          {row.notes}
+                        </p>
                       ) : (
                         <span className="text-xs text-muted-foreground">---</span>
                       )}
                     </TableCell>
                     {canManage && (
-                      <TableCell className="min-w-[200px] text-right">
-                        <div className="flex justify-end flex-wrap gap-2">
+                      <TableCell className="min-w-[200px] text-right align-top">
+                        <div className="flex justify-end flex-wrap gap-2 max-w-full">
                           {onViewDetails && (
                             <Button variant="outline" size="sm" onClick={() => onViewDetails(row.booking)}>
                               Ver
@@ -304,9 +309,10 @@ export function NAMIBookingListView({
                     )}
                   </TableRow>
                 ))}
-              </TableBody>
-              <TableCaption>Use o scroll horizontal para visualizar todas as colunas quando necessário.</TableCaption>
-            </Table>
+                </TableBody>
+                <TableCaption>Use o scroll horizontal para visualizar todas as colunas quando necessário.</TableCaption>
+              </Table>
+            </div>
           </div>
         )}
       </CardContent>

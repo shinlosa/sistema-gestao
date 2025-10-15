@@ -241,6 +241,15 @@ export const namiRooms: NAMIRoom[] = [
     description: 'Sala independente disponível para reservas.',
     isIndependent: true,
     available: true
+  },
+  {
+    id: 'room18',
+    number: 18,
+    name: 'Sala 18',
+    capacity: 20,
+    description: 'Sala independente disponível para reservas.',
+    isIndependent: true,
+    available: true
   }
 ];
 

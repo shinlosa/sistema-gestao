@@ -1,34 +1,44 @@
 
-  # Sistema de Reservas de Sala
+# Sistema de Reservas de Sala
 
-  This is a code bundle for Sistema de Reservas de Sala. The original project is available at https://www.figma.com/design/Ii50GcELGhfOWFleCVr9Pi/Sistema-de-Reservas-de-Sala.
+Aplicação web para gerenciamento das salas do NAMI/UNIFOR. O sistema permite visualizar a disponibilidade, reservar horários e acompanhar logs de atividade, com um backend em Node.js que espelha os dados utilizados pelo frontend.
 
-  ## Running the code
+## Stack
+- Frontend: React 18 + TypeScript + Vite + Tailwind CSS + ShadCN/UI
+- Backend: Node.js 20 + Express + TypeScript + Zod
+- Autenticação: JWT com armazenamento local
+- Dados: Estruturas em memória (mock) com plano de migração para MySQL
 
-  Run `npm i` to install the dependencies.
+## Estrutura
+- `src/`: aplicação frontend (componentes por feature, hooks, dados mock)
+- `backend/`: API Express com serviços, controllers e rotas
+- `build/`: artefatos gerados pelo Vite (produção)
 
-  Run `npm run dev` to start the development server (available at `http://localhost:3000`).
+## Pré-requisitos
+- Node.js 20+
+- npm 10+
 
-  ## Backend (Node + Express)
+## Executando o frontend
+```bash
+npm install
+npm run dev
+# acessa em http://localhost:5173
+```
 
-  The backend lives in the `backend/` directory and provides mock APIs that mirror the current frontend data.
+## Executando o backend
+```bash
+cd backend
+npm install
+npm run dev
+# API em http://localhost:3333
+```
 
-  ```bash
-  cd backend
-  npm install
-  npm run dev
-  ```
+Configure `backend/.env` (copie de `.env.example` se necessário) para ajustar porta e origens de CORS. O frontend lê a URL da API do arquivo `.env` na raiz via `VITE_API_BASE_URL`.
 
-  The server listens on port `3333` by default. Update environment variables in `backend/.env` (create from `.env.example` if needed).
+## Dados de exemplo
+- 3 monitoramentos com 15 salas vinculadas
+- 3 salas independentes (Salas 12, 13 e 18) reserváveis em qualquer período
+- Grade diária com 10 blocos de 50 minutos (manhã e tarde)
 
-  ## Frontend API configuration
-
-  The frontend expects the backend API URL to be available through the `VITE_API_BASE_URL` variable. Duplicate the `.env.example` file at the project root and adjust the value if required:
-
-  ```bash
-  cp .env.example .env
-  # edit .env if the backend runs on a different host/port
-  ```
-
-  When both servers are running (`npm run dev` in the root and `npm run dev` inside `backend/`), the login screen will authenticate against the API and the dashboard data will sync from the backend.
+As reservas e usuários são mantidos em memória durante a execução. Reiniciar o servidor limpa os dados.
   

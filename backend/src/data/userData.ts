@@ -4,7 +4,7 @@ export const users: User[] = [
   {
     id: "admin1",
     username: "admin.nami",
-    password: "NAMI@2025!",
+    passwordHash: "$2a$10$0YC36FpzAsWWqGdOPEL8KOUz4qSOMIQzHKxV5te23K01j.5GIxLcK",
     name: "Administrador NAMI",
     email: "admin.nami@unifor.br",
     role: "admin",
@@ -15,7 +15,7 @@ export const users: User[] = [
   {
     id: "coord1",
     username: "coord.nutricao",
-    password: "Nutri@123",
+    passwordHash: "$2a$10$GVo66iQOp5ZJBcLndqF2aekw8TowoNKM3SfQ.6iqy3VTSA7IDRTNW",
     name: "Coordenadora Nutrição",
     email: "coord.nutricao@unifor.br",
     role: "editor",
@@ -26,7 +26,7 @@ export const users: User[] = [
   {
     id: "prof1",
     username: "flavia.prof",
-    password: "Prof@456",
+    passwordHash: "$2a$10$bJBNoqNejI4Ne/TtjADljebtcvS4G4Ufzl3m5HcDPzjDbgdfZR56K",
     name: "Profa. Flávia",
     email: "flavia.prof@unifor.br",
     role: "viewer",

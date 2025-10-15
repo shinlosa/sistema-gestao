@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import type { Monitoring, NAMIBooking, NAMIRoom, User } from "../types/nami";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3333/api";
@@ -15,6 +17,13 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
   const headers = new Headers(options.headers ?? undefined);
   if (!headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
+  }
+
+  if (!headers.has("Authorization") && typeof window !== "undefined") {
+    const token = window.localStorage.getItem("nami-auth-token");
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {

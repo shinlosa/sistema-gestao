@@ -60,6 +60,12 @@ export default function App() {
   const canManageBookings = authState.user?.role === "admin" || authState.user?.role === "editor";
 
   useEffect(() => {
+    if (!authState.isAuthenticated) {
+      return;
+    }
+
+    let cancelled = false;
+
     const loadData = async () => {
       setIsDataLoading(true);
       try {
@@ -70,12 +76,15 @@ export default function App() {
           api.getUsers(),
         ]);
 
+        if (cancelled) return;
+
         setMonitorings(monitoringsResponse.monitorings);
         setRooms(roomsResponse.rooms);
         setBookings(bookingsResponse.bookings.map(mapBookingFromApi));
         setUsers(usersResponse.users.map(mapUserFromApi));
         setDataError(null);
       } catch (error) {
+        if (cancelled) return;
         console.error("Erro ao carregar dados do backend", error);
         if (error instanceof ApiError) {
           setDataError(error.message);
@@ -83,12 +92,18 @@ export default function App() {
           setDataError("Não foi possível carregar dados do servidor. Utilizando dados locais.");
         }
       } finally {
-        setIsDataLoading(false);
+        if (!cancelled) {
+          setIsDataLoading(false);
+        }
       }
     };
 
     loadData().catch((error) => console.error("Falha inesperada ao carregar dados", error));
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authState.isAuthenticated]);
 
   const handleRoomBooking = (room: NAMIRoom) => {
     if (!canManageBookings) {
