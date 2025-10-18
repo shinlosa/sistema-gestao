@@ -69,7 +69,7 @@ export const userService = {
       approvedAt: input.status === "active" ? now : undefined,
     };
 
-  const created = userRepository.create(user);
+    const created = userRepository.create(user);
     const { passwordHash: _password, ...rest } = created;
     return rest;
   },
@@ -100,7 +100,7 @@ export const userService = {
       passwordHash,
     };
 
-  const saved = userRepository.update(updated);
+    const saved = userRepository.update(updated);
     const { passwordHash: _password, ...rest } = saved;
     return rest;
   },

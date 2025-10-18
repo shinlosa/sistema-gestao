@@ -20,6 +20,7 @@ interface NAMIBookingModalProps {
   existingBookings?: NAMIBooking[];
   editingBooking?: NAMIBooking | null;
   currentUser?: { name: string } | null;
+  canManage?: boolean;
 }
 
 export function NAMIBookingModal({
@@ -30,12 +31,15 @@ export function NAMIBookingModal({
   existingBookings = [],
   editingBooking = null,
   currentUser = null,
+  canManage = false,
 }: NAMIBookingModalProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<string[]>([]);
   const [responsible, setResponsible] = useState("");
   const [serviceType, setServiceType] = useState("");
   const [notes, setNotes] = useState("");
+
+  const isReadOnly = !canManage;
 
   useEffect(() => {
     if (editingBooking) {
@@ -66,6 +70,10 @@ export function NAMIBookingModal({
   };
 
   const handleTimeSlotChange = (slotId: string, checked: boolean) => {
+    if (isReadOnly) {
+      return;
+    }
+
     if (checked) {
       setSelectedTimeSlots((prev) => [...prev, slotId].sort());
     } else {
@@ -132,7 +140,7 @@ export function NAMIBookingModal({
     return true;
   }, [normalizedSelectedSlots, responsible, room, selectedDate, serviceType]);
 
-  const canSubmit = isFormValid && (!editingBooking || hasChanges);
+  const canSubmit = canManage && isFormValid && (!editingBooking || hasChanges);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,6 +215,7 @@ export function NAMIBookingModal({
                   placeholder="Nome do responsável"
                   className="border-2 border-blue-200 focus:border-blue-500 bg-white"
                   required
+                  disabled={isReadOnly}
                 />
               </div>
 
@@ -219,6 +228,7 @@ export function NAMIBookingModal({
                   placeholder="Ex: Atendimento de 1ª vez (Pcte A)"
                   className="border-2 border-blue-200 focus:border-blue-500 bg-white"
                   required
+                  disabled={isReadOnly}
                 />
               </div>
 
@@ -231,6 +241,7 @@ export function NAMIBookingModal({
                   placeholder="Informações adicionais sobre a reserva"
                   className="border-2 border-blue-200 focus:border-blue-500 bg-white resize-none"
                   rows={3}
+                  disabled={isReadOnly}
                 />
               </div>
 
@@ -298,7 +309,7 @@ export function NAMIBookingModal({
                                 <Checkbox
                                   id={slot.id}
                                   checked={isSelected}
-                                  disabled={isOccupied}
+                                  disabled={isOccupied || isReadOnly}
                                   onCheckedChange={(checked: CheckedState) =>
                                     handleTimeSlotChange(slot.id, checked === true)
                                   }
@@ -352,7 +363,7 @@ export function NAMIBookingModal({
                                 <Checkbox
                                   id={slot.id}
                                   checked={isSelected}
-                                  disabled={isOccupied}
+                                  disabled={isOccupied || isReadOnly}
                                   onCheckedChange={(checked: CheckedState) =>
                                     handleTimeSlotChange(slot.id, checked === true)
                                   }
@@ -384,12 +395,21 @@ export function NAMIBookingModal({
             </div>
           </div>
 
-          <div className="flex justify-end gap-4 pt-6 border-t">
+          <div className="flex justify-between sm:justify-end gap-4 pt-6 border-t flex-wrap">
+            {isReadOnly && (
+              <div className="text-sm text-muted-foreground">
+                Você possui acesso somente para consulta. Apenas administradores ou editores podem confirmar reservas.
+              </div>
+            )}
             <Button type="button" variant="outline" onClick={onClose} size="lg">
               Cancelar
             </Button>
             <Button type="submit" disabled={!canSubmit} size="lg">
-              {editingBooking ? "Atualizar Reserva" : "Confirmar Reserva"}
+              {editingBooking
+                ? "Atualizar Reserva"
+                : canManage
+                ? "Confirmar Reserva"
+                : "Somente consulta"}
             </Button>
           </div>
         </form>

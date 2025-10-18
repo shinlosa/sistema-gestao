@@ -30,13 +30,25 @@ export const users: User[] = [
     password: 'Prof@456',
     name: 'Profa. Flávia',
     email: 'flavia.prof@unifor.br',
-    role: 'viewer',
+    role: 'usuario',
     department: 'Nutrição',
     status: 'active',
     createdAt: new Date('2024-12-10'),
   },
+  {
+    id: 'read1',
+    username: 'leitor.nami',
+    password: 'Leitor@789',
+    name: 'Leitor NAMI',
+    email: 'leitor.nami@unifor.br',
+    role: 'leitor',
+    department: 'Nutrição',
+    status: 'active',
+    createdAt: new Date('2024-12-15'),
+  },
 ];
 
+export { roleLabels } from "./roleConfig";
 // Função para validar login
 export const validateLogin = (username: string, password: string): User | null => {
   const user = users.find(u => u.username === username && u.password === password && u.status === 'active');

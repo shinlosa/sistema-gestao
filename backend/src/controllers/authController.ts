@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
+import { activityLogService } from "../services/activityLogService.js";
 import { authService } from "../services/authService.js";
 
 const loginSchema = z.object({
@@ -27,12 +28,16 @@ export const authController = {
         return response.status(401).json({ message: "Credenciais inválidas" });
       }
 
+      activityLogService.register(
+        "Login",
+        `Usuário autenticado: ${loginResult.user.name}`,
+        loginResult.user.id,
+        loginResult.user.id,
+      );
+
       return response.status(200).json(loginResult);
     } catch (error) {
       return next(error);
     }
-  },
-  listUsers: (_request: Request, response: Response) => {
-    return response.json({ users: authService.listUsers() });
   },
 };

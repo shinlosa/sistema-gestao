@@ -140,8 +140,9 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               <h4 className="text-sm font-medium text-blue-900 mb-2">Credenciais de Teste:</h4>
               <div className="text-xs text-blue-700 space-y-1">
                 <div><strong>Admin:</strong> admin.nami / NAMI@2025!</div>
-                <div><strong>Coordenadora:</strong> coord.nutricao / Nutri@123</div>
-                <div><strong>Professora:</strong> flavia.prof / Prof@456</div>
+                <div><strong>Editor:</strong> coord.nutricao / Nutri@123</div>
+                <div><strong>Usuário:</strong> flavia.prof / Prof@456</div>
+                <div><strong>Leitor:</strong> leitor.nami / Leitor@789</div>
               </div>
             </div>
           </CardContent>

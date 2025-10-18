@@ -21,11 +21,19 @@ export const authService = {
       return null;
     }
 
-  const isPasswordValid = await passwordUtils.verify(password, user.passwordHash);
+    const isPasswordValid = await passwordUtils.verify(password, user.passwordHash);
 
     if (!isPasswordValid) {
       return null;
     }
+
+    const loginTimestamp = new Date().toISOString();
+    const userWithLastLogin: User = {
+      ...user,
+      lastLogin: loginTimestamp,
+    };
+
+    userRepository.update(userWithLastLogin);
 
     const token = tokenUtils.sign({
       sub: user.id,
@@ -34,9 +42,8 @@ export const authService = {
     });
 
     return {
-      user: omitPassword(user),
+      user: omitPassword(userWithLastLogin),
       token,
     };
   },
-  listUsers: (): Array<Omit<User, "passwordHash">> => userRepository.list().map((user) => omitPassword(user)),
 };

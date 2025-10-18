@@ -64,7 +64,7 @@ export interface User {
   password?: string;
   name: string;
   email: string;
-  role: 'admin' | 'editor' | 'viewer' | 'coordinator' | 'professor' | 'staff';
+  role: 'admin' | 'editor' | 'usuario' | 'leitor';
   department?: string;
   status: 'active' | 'pending' | 'inactive' | 'suspended';
   createdAt: Date;

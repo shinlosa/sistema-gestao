@@ -30,8 +30,8 @@ Sistema web desktop para automatizar o processo de reserva de salas do curso de 
 ### 1.1 Estrutura de Dados
 
 #### Salas (NAMIRoom)
-- 18 salas organizadas em 3 monitoramentos principais
-- Salas independentes (não vinculadas a monitoramentos) – agora três unidades (Salas 12, 13 e 18)
+- 17 salas organizadas em 3 monitoramentos principais
+- Salas independentes (não vinculadas a monitoramentos) – agora duas unidades (Salas 12 e 13)
 - Atributos: ID, número, nome, capacidade, descrição, responsável padrão, disponibilidade
 - **Plataforma:** Web Desktop
 
@@ -47,9 +47,10 @@ Sistema web desktop para automatizar o processo de reserva de salas do curso de 
 - Rastreabilidade: quem criou e quando
 
 #### Usuários (User)
-- Roles: admin, editor, viewer, coordinator, professor, staff
+- Roles: admin, editor, usuario, leitor
 - Status: active, pending, inactive, suspended
 - Autenticação via username/password com token JWT
+- Sistema de cores por role: 🟣 admin (roxo), 🔵 editor (azul), 🟢 usuario (verde), ⚪ leitor (cinza)
 
 ### 1.2 Funcionalidades Implementadas
 
@@ -140,7 +141,7 @@ Sistema web desktop para automatizar o processo de reserva de salas do curso de 
 | **RF001** | Login de Usuários | Sistema deve permitir login de usuários autenticados via API REST | - Validação de credenciais (username e password)<br>- Retorno de token JWT<br>- Sessão persistente no localStorage<br>- Feedback visual para erros<br>- Redirecionamento automático após sucesso | Essencial | ✅ Implementado |
 | **RF002** | Conta Administradora | Deve existir conta admin com acesso total | - Login: admin.nami<br>- Senha: NAMI@2025!<br>- Acesso total ao sistema<br>- Gestão de todos os usuários | Essencial | ✅ Implementado |
 | **RF003** | Logout de Usuários | Usuários devem poder sair do sistema de forma segura | - Encerramento da sessão<br>- Limpeza do localStorage<br>- Redirecionamento para login<br>- Registro no log de atividades | Essencial | ✅ Implementado |
-| **RF004** | Controle de Permissões | Diferentes níveis de acesso baseados no perfil | - Admin: acesso total<br>- Editor: criar/editar/cancelar reservas<br>- Viewer: apenas visualização<br>- Validação em cada ação | Essencial | ✅ Implementado |
+| **RF004** | Controle de Permissões | Diferentes níveis de acesso baseados no perfil | - 🟣 Admin: acesso total ao sistema<br>- 🔵 Editor: criar/editar/cancelar reservas + logs<br>- 🟢 Usuario: apenas criar reservas<br>- ⚪ Leitor: apenas visualização<br>- Validação em cada ação | Essencial | ✅ Implementado |
 | **RF005** | Autenticação via Token | Sistema deve usar JWT para autenticação | - Token gerado no login<br>- Armazenamento seguro<br>- Validação em requisições<br>- Expiração automática | Essencial | ✅ Implementado |
 
 ### 3.2 Gestão de Usuários
@@ -165,7 +166,7 @@ Sistema web desktop para automatizar o processo de reserva de salas do curso de 
 
 | ID | Requisito | Descrição | Critérios de Aceitação | Prioridade | Status |
 |---|---|---|---|---|---|
-| **RF019** | Visualização por Monitoramento | Exibir 18 salas organizadas por 3 monitoramentos | - Agrupamento visual por monitoramento<br>- Informações básicas<br>- Status de disponibilidade<br>- Capacidade | Essencial | ✅ Implementado |
+| **RF019** | Visualização por Monitoramento | Exibir 17 salas organizadas por 3 monitoramentos | - Agrupamento visual por monitoramento<br>- Informações básicas<br>- Status de disponibilidade<br>- Capacidade | Essencial | ✅ Implementado |
 | **RF020** | Salas Independentes | Exibir salas não vinculadas a monitoramentos | - Seção separada<br>- Badge "Sala Independente"<br>- Status em tempo real<br>- Informações específicas | Essencial | ✅ Implementado |
 | **RF021** | Detalhes da Sala | Visualizar informações completas | - Número da sala<br>- Tipo de monitoramento<br>- Capacidade<br>- Recursos disponíveis<br>- Responsável padrão<br>- Reservas atuais e futuras | Importante | ✅ Implementado |
 | **RF022** | Status Visual das Salas | Indicadores visuais de disponibilidade | - Verde: disponível<br>- Vermelho: ocupada<br>- Informações de ocupação atual<br>- Próximas reservas<br>- Atualização em tempo real | Importante | ✅ Implementado |
@@ -352,12 +353,12 @@ Sistema web desktop para automatizar o processo de reserva de salas do curso de 
 ## 5. Regras de Negócio
 
 ### RN001 - Controle de Acesso por Role
-- **Admin:** Acesso total, gestão de usuários, todas as ações
-- **Editor:** Criar, editar e cancelar reservas; visualizar tudo
-- **Coordinator:** Similar a Editor, com privilégios específicos
-- **Professor:** Visualizar e criar reservas próprias (futuro)
-- **Staff:** Visualizar e criar reservas (futuro)
-- **Viewer:** Apenas visualização, sem ações
+- **🟣 Admin (admin):** Acesso total ao sistema, gestão de usuários, criar/editar/cancelar reservas, visualizar logs
+- **🔵 Editor (editor):** Criar, editar e cancelar qualquer reserva; visualizar logs de atividade
+- **🟢 Usuario (usuario):** Apenas criar novas reservas; sem permissão para editar/cancelar ou acessar logs
+- **⚪ Leitor (leitor):** Apenas visualização de salas e disponibilidade; sem criar reservas ou acessar logs
+- Cores de identificação visual: roxo (admin), azul (editor), verde (usuario), cinza (leitor)
+- Backend valida permissões em cada endpoint (middleware requireRole)
 
 ### RN002 - Validação de Conflitos de Reserva
 - Uma sala não pode ser reservada para o mesmo período em uma mesma data
@@ -406,7 +407,7 @@ Sistema web desktop para automatizar o processo de reserva de salas do curso de 
 - Ordenação cronológica reversa (mais recente primeiro)
 
 ### RN010 - Organização de Salas
-- 18 salas no total (15 monitoradas + 3 independentes)
+- 17 salas no total (15 monitoradas + 2 independentes)
 - 3 monitoramentos principais
 - Salas independentes (não vinculadas a monitoramento)
 - Cada monitoramento tem responsável e tipo de atendimento padrão
@@ -628,6 +629,7 @@ sistema-gestao/
 | 1.0 | [Data anterior] | [Autor] | Versão inicial dos requisitos |
 | 2.0 | Outubro 2025 | shinlosa | Análise completa do projeto atual, atualização de requisitos, documentação técnica expandida |
 | 2.1 | Outubro 2025 | shinlosa | Remoção de requisitos mobile - projeto exclusivamente web desktop |
+| 2.2 | Outubro 2025 | shinlosa | Reorganização de roles: admin, editor, usuario, leitor com cores distintivas e matriz de permissões simplificada |
 
 ---
 

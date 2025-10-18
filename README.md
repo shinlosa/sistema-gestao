@@ -41,4 +41,25 @@ Configure `backend/.env` (copie de `.env.example` se necessário) para ajustar p
 - Grade diária com 10 blocos de 50 minutos (manhã e tarde)
 
 As reservas e usuários são mantidos em memória durante a execução. Reiniciar o servidor limpa os dados.
-  
+
+## Credenciais de Teste
+
+O sistema possui 4 níveis de acesso com cores distintivas:
+
+| Role | Cor | Usuário | Senha | Permissões |
+|------|-----|---------|-------|------------|
+| 🟣 Administrador | Roxo | `admin.nami` | `NAMI@2025!` | Acesso total: criar/editar/cancelar reservas, gerenciar usuários, visualizar logs |
+| 🔵 Editor | Azul | `coord.nutricao` | `Nutri@123` | Criar/editar/cancelar reservas, visualizar logs |
+| 🟢 Usuário | Verde | `flavia.prof` | `Prof@456` | Apenas criar novas reservas |
+| ⚪ Leitor | Cinza | `leitor.nami` | `Leitor@789` | Apenas visualizar disponibilidade (sem criar reservas) |
+
+### Matriz de Permissões
+
+| Ação | Admin | Editor | Usuário | Leitor |
+|------|-------|--------|---------|--------|
+| Visualizar salas e disponibilidade | ✓ | ✓ | ✓ | ✓ |
+| Criar reserva | ✓ | ✓ | ✓ | ✗ |
+| Editar reserva | ✓ | ✓ | ✗ | ✗ |
+| Cancelar reserva | ✓ | ✓ | ✗ | ✗ |
+| Visualizar logs de atividade | ✓ | ✓ | ✗ | ✗ |
+| Gerenciar usuários | ✓ | ✗ | ✗ | ✗ |

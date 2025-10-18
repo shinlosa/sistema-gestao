@@ -56,9 +56,8 @@ Desenvolver uma solução web para automatizar o processo de reserva de salas do
 #### **SALAS INDEPENDENTES** (Não vinculadas a monitoramentos)
 - **Sala 12:** Uso geral
 - **Sala 13:** Capacidade especial (25 lugares)
-- **Sala 18:** Dedicada a reuniões especiais e demandas administrativas
 
-**TOTAL GERAL:** 18 salas (15 em monitoramentos + 3 independentes)
+**TOTAL GERAL:** 17 salas (15 em monitoramentos + 2 independentes)
 
 ---
 
@@ -88,28 +87,60 @@ Desenvolver uma solução web para automatizar o processo de reserva de salas do
 
 ### **Hierarquia de Acesso:**
 
-#### **1. Administrador Principal**
+O sistema possui 4 níveis de acesso com cores distintivas para fácil identificação:
+
+#### **1. 🟣 Administrador (admin)**
+- **Cor de Identificação:** Roxo
 - **Responsável:** Coordenadora do Curso de Nutrição
 - **Permissões:**
-  - Acesso total ao sistema
-  - Gerenciar usuários (aprovar/negar solicitações)
-  - Visualizar todos os logs de atividade
-  - Configurar salas e horários
-  - Backup e manutenção de dados
+  - ✓ Acesso total ao sistema
+  - ✓ Criar, editar e cancelar qualquer reserva
+  - ✓ Gerenciar usuários (criar, aprovar, suspender, alterar roles)
+  - ✓ Visualizar logs de atividade do sistema
+  - ✓ Configurar salas e horários
+  - ✓ Backup e manutenção de dados
 
-#### **2. Editores/Funcionários**
-- **Acesso:** Mediante aprovação da coordenadora
+#### **2. 🔵 Editor (editor)**
+- **Cor de Identificação:** Azul
+- **Exemplo:** Coordenadores, Gestores de Monitoramento
 - **Permissões:**
-  - Criar reservas
-  - Editar reservas próprias
-  - Visualizar disponibilidade
-  - Cancelar reservas próprias
+  - ✓ Criar reservas
+  - ✓ Editar qualquer reserva
+  - ✓ Cancelar qualquer reserva
+  - ✓ Visualizar logs de atividade
+  - ✓ Visualizar disponibilidade
+  - ✗ Gerenciar usuários
 
-#### **3. Visualizadores**
+#### **3. 🟢 Usuário (usuario)**
+- **Cor de Identificação:** Verde (Emerald)
+- **Exemplo:** Professores, Funcionários
 - **Permissões:**
-  - Consultar disponibilidade
-  - Visualizar logs públicos
-  - Solicitar reservas (dependente de aprovação)
+  - ✓ Criar reservas
+  - ✓ Visualizar disponibilidade
+  - ✗ Editar ou cancelar reservas
+  - ✗ Acessar logs de atividade
+  - ✗ Gerenciar usuários
+
+#### **4. ⚪ Leitor (leitor)**
+- **Cor de Identificação:** Cinza (Slate)
+- **Exemplo:** Visitantes, Consulta
+- **Permissões:**
+  - ✓ Visualizar disponibilidade de salas
+  - ✓ Consultar reservas (somente leitura)
+  - ✗ Criar, editar ou cancelar reservas
+  - ✗ Acessar logs de atividade
+  - ✗ Gerenciar usuários
+
+### **Resumo de Permissões por Ação:**
+
+| Ação | Admin | Editor | Usuário | Leitor |
+|------|-------|--------|---------|--------|
+| Visualizar salas | ✓ | ✓ | ✓ | ✓ |
+| Criar reserva | ✓ | ✓ | ✓ | ✗ |
+| Editar reserva | ✓ | ✓ | ✗ | ✗ |
+| Cancelar reserva | ✓ | ✓ | ✗ | ✗ |
+| Ver logs | ✓ | ✓ | ✗ | ✗ |
+| Gerenciar usuários | ✓ | ✗ | ✗ | ✗ |
 
 ---
 
@@ -157,9 +188,11 @@ Desenvolver uma solução web para automatizar o processo de reserva de salas do
 5. Administrador pode modificar qualquer reserva
 
 ### **Usuários:**
-6. Apenas a coordenadora pode aprovar novos usuários
-7. Logs de atividade devem ser mantidos permanentemente
-8. Tentativas de acesso não autorizado devem ser registradas
+6. Apenas administradores podem gerenciar usuários (criar, aprovar, alterar roles)
+7. Editores e administradores têm acesso aos logs de atividade
+8. Usuários com role "leitor" podem apenas consultar (sem criar reservas)
+9. Usuários com role "usuario" podem criar reservas, mas não editar/cancelar
+10. Tentativas de acesso não autorizado devem ser registradas
 
 ### **Salas:**
 9. Sala 13 tem capacidade especial (25 lugares)
@@ -177,12 +210,14 @@ Desenvolver uma solução web para automatizar o processo de reserva de salas do
 id (PK, AUTO_INCREMENT)
 nome (VARCHAR(100))
 email (VARCHAR(150), UNIQUE)
-senha (VARCHAR(255))
-tipo (ENUM: 'admin', 'editor', 'visualizador')
-status (ENUM: 'ativo', 'pendente', 'inativo')
+senha_hash (VARCHAR(255))
+role (ENUM: 'admin', 'editor', 'usuario', 'leitor')
+departamento (VARCHAR(100))
+status (ENUM: 'active', 'pending', 'inactive', 'suspended')
 data_criacao (TIMESTAMP)
-data_aprovacao (TIMESTAMP)
+ultimo_acesso (TIMESTAMP)
 aprovado_por (FK -> usuarios.id)
+data_aprovacao (TIMESTAMP)
 ```
 
 #### **salas**

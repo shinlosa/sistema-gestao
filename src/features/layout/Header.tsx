@@ -3,6 +3,7 @@ import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../../components/ui/dropdown-menu";
 import { User } from "../../types/nami";
+import { ROLE_DISPLAY_CONFIG } from "../../data/roleConfig";
 
 interface HeaderProps {
   activeTab: string;
@@ -12,20 +13,12 @@ interface HeaderProps {
 }
 
 export function Header({ activeTab, onTabChange, currentUser, onLogout }: HeaderProps) {
-  const getRoleLabel = (role: User["role"]) => {
-    switch (role) {
-      case "admin":
-        return "Administrador";
-      case "coordinator":
-        return "Coordenador";
-      case "professor":
-        return "Professor";
-      case "staff":
-        return "Funcionário";
-      default:
-        return "Usuário";
-    }
-  };
+  const canViewLogs = ["admin", "editor"].includes(currentUser.role);
+
+  const getRoleLabel = (role: User["role"]) => ROLE_DISPLAY_CONFIG[role].label;
+
+  const getRoleColor = (role: User["role"]) => ROLE_DISPLAY_CONFIG[role].headerTextClass;
+  
   return (
     <header className="border-b bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -71,18 +64,20 @@ export function Header({ activeTab, onTabChange, currentUser, onLogout }: Header
                 <CalendarDays className="h-4 w-4" />
                 <span>Reservas</span>
               </Button>
-              <Button
-                variant={activeTab === "logs" ? "secondary" : "ghost"}
-                onClick={() => onTabChange("logs")}
-                className={`flex items-center space-x-2 ${
-                  activeTab === "logs"
-                    ? "bg-white text-blue-700 hover:bg-blue-50"
-                    : "text-white hover:bg-white/20"
-                }`}
-              >
-                <Activity className="h-4 w-4" />
-                <span>Log de Atividades</span>
-              </Button>
+              {canViewLogs && (
+                <Button
+                  variant={activeTab === "logs" ? "secondary" : "ghost"}
+                  onClick={() => onTabChange("logs")}
+                  className={`flex items-center space-x-2 ${
+                    activeTab === "logs"
+                      ? "bg-white text-blue-700 hover:bg-blue-50"
+                      : "text-white hover:bg-white/20"
+                  }`}
+                >
+                  <Activity className="h-4 w-4" />
+                  <span>Log de Atividades</span>
+                </Button>
+              )}
               {currentUser.role === "admin" && (
                 <Button
                   variant={activeTab === "users" ? "secondary" : "ghost"}
@@ -108,7 +103,7 @@ export function Header({ activeTab, onTabChange, currentUser, onLogout }: Header
                   </div>
                   <div className="text-left hidden md:block">
                     <div className="text-sm font-medium">{currentUser.name}</div>
-                    <div className="text-xs text-blue-100">{getRoleLabel(currentUser.role)}</div>
+                    <div className={`text-xs font-semibold ${getRoleColor(currentUser.role)}`}>{getRoleLabel(currentUser.role)}</div>
                   </div>
                   <ChevronDown className="h-4 w-4" />
                 </Button>
@@ -117,7 +112,7 @@ export function Header({ activeTab, onTabChange, currentUser, onLogout }: Header
                 <div className="px-3 py-2 border-b">
                   <p className="text-sm font-medium">{currentUser.name}</p>
                   <p className="text-xs text-muted-foreground">{currentUser.email}</p>
-                  <Badge className="mt-1 text-xs" variant="outline">
+                  <Badge className={`mt-1 text-xs ${ROLE_DISPLAY_CONFIG[currentUser.role].badgeClass}`}>
                     {getRoleLabel(currentUser.role)}
                   </Badge>
                 </div>

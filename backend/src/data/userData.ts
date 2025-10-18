@@ -4,7 +4,7 @@ export const users: User[] = [
   {
     id: "admin1",
     username: "admin.nami",
-    passwordHash: "$2a$10$0YC36FpzAsWWqGdOPEL8KOUz4qSOMIQzHKxV5te23K01j.5GIxLcK",
+    passwordHash: "$2a$10$VI.S0VTAd2bW0/QbSl5ZGOg0CNKsUk6SS5RRaYX4lDdbYwshKv9I2",
     name: "Administrador NAMI",
     email: "admin.nami@unifor.br",
     role: "admin",
@@ -15,7 +15,7 @@ export const users: User[] = [
   {
     id: "coord1",
     username: "coord.nutricao",
-    passwordHash: "$2a$10$GVo66iQOp5ZJBcLndqF2aekw8TowoNKM3SfQ.6iqy3VTSA7IDRTNW",
+    passwordHash: "$2a$10$PNPekJS.QXRfD62ItBChvuaCMFlgJE5obvDnz1CRSjY2p1Rgn3nt.",
     name: "Coordenadora Nutrição",
     email: "coord.nutricao@unifor.br",
     role: "editor",
@@ -26,12 +26,23 @@ export const users: User[] = [
   {
     id: "prof1",
     username: "flavia.prof",
-    passwordHash: "$2a$10$bJBNoqNejI4Ne/TtjADljebtcvS4G4Ufzl3m5HcDPzjDbgdfZR56K",
+    passwordHash: "$2a$10$lCXIeR/6ITH/P9zbOFmPXuEP9RbkKpE8sCKBN48wMFwz2weaMQL5e",
     name: "Profa. Flávia",
     email: "flavia.prof@unifor.br",
-    role: "viewer",
+    role: "usuario",
     department: "Nutrição",
     status: "active",
     createdAt: new Date("2024-12-10").toISOString(),
+  },
+  {
+    id: "read1",
+    username: "leitor.nami",
+    passwordHash: "$2a$10$65PfaZVzkOv4K3QJghi4julNkmGx88NSnGaCMixisES22cfKhai0q",
+    name: "Leitor NAMI",
+    email: "leitor.nami@unifor.br",
+    role: "leitor",
+    department: "Nutrição",
+    status: "active",
+    createdAt: new Date("2024-12-12").toISOString(),
   },
 ];

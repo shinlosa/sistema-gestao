@@ -57,7 +57,17 @@ export default function App() {
   const [monitoringSearchTerm, setMonitoringSearchTerm] = useState("");
   const [isDataLoading, setIsDataLoading] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
-  const canManageBookings = authState.user?.role === "admin" || authState.user?.role === "editor";
+  const userRole = authState.user?.role ?? "leitor";
+  const canCreateBookings = ["admin", "editor", "usuario"].includes(userRole);
+  const canEditBookings = ["admin", "editor"].includes(userRole);
+  const canViewBookingDetails = true;
+  const canAccessLogs = ["admin", "editor"].includes(userRole);
+
+  useEffect(() => {
+    if (!canAccessLogs && activeTab === "logs") {
+      setActiveTab("rooms");
+    }
+  }, [activeTab, canAccessLogs]);
 
   useEffect(() => {
     if (!authState.isAuthenticated) {
@@ -86,8 +96,14 @@ export default function App() {
       } catch (error) {
         if (cancelled) return;
         console.error("Erro ao carregar dados do backend", error);
+
         if (error instanceof ApiError) {
-          setDataError(error.message);
+          if (error.status === 403) {
+            // Usuário sem permissão para o endpoint. Mantemos dados locais sem exibir alerta.
+            setDataError(null);
+          } else {
+            setDataError(error.message);
+          }
         } else {
           setDataError("Não foi possível carregar dados do servidor. Utilizando dados locais.");
         }
@@ -106,10 +122,7 @@ export default function App() {
   }, [authState.isAuthenticated]);
 
   const handleRoomBooking = (room: NAMIRoom) => {
-    if (!canManageBookings) {
-      toast.error("Acesso restrito", {
-        description: "Somente administradores ou editores podem realizar reservas.",
-      });
+    if (!canViewBookingDetails) {
       return;
     }
     setSelectedRoom(room);
@@ -118,10 +131,7 @@ export default function App() {
   };
 
   const handleEditBooking = (booking: NAMIBooking) => {
-    if (!canManageBookings) {
-      toast.error("Acesso restrito", {
-        description: "Somente administradores ou editores podem editar reservas.",
-      });
+    if (!canEditBookings) {
       return;
     }
   const room = rooms.find((candidate) => candidate.id === booking.roomId);
@@ -178,10 +188,10 @@ export default function App() {
   };
 
   const handleBookingSubmit = (bookingData: Omit<NAMIBooking, "id" | "status" | "createdAt">) => {
-    if (!canManageBookings) {
-      toast.error("Acesso restrito", {
-        description: "Somente administradores ou editores podem confirmar reservas.",
-      });
+    if (editingBooking && !canEditBookings) {
+      return;
+    }
+    if (!editingBooking && !canCreateBookings) {
       return;
     }
     if (editingBooking) {
@@ -230,10 +240,7 @@ export default function App() {
   };
 
   const handleCancelBooking = (bookingId: string) => {
-    if (!canManageBookings) {
-      toast.error("Acesso restrito", {
-        description: "Somente administradores ou editores podem cancelar reservas.",
-      });
+    if (!canEditBookings) {
       return;
     }
     const booking = bookings.find(b => b.id === bookingId);
@@ -390,13 +397,13 @@ export default function App() {
               bookings={bookings} 
               onCancelBooking={handleCancelBooking}
               onEditBooking={handleEditBooking}
-              canManage={canManageBookings}
+              canManage={canEditBookings}
               onPrint={bookings.length > 0 ? handlePrintBookingReport : undefined}
             />
           </div>
         )}
 
-        {activeTab === "logs" && (
+  {canAccessLogs && activeTab === "logs" && (
           <div>
             <div className="mb-8">
               <h2 className="text-2xl font-semibold mb-2">Log de Atividades</h2>
@@ -430,6 +437,7 @@ export default function App() {
         existingBookings={bookings}
         editingBooking={editingBooking}
         currentUser={authState.user}
+        canManage={editingBooking ? canEditBookings : canCreateBookings}
       />
 
       <footer className="mt-16 border-t bg-white/80 backdrop-blur-sm">

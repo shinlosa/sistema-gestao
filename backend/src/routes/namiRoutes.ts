@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { activityLogController } from "../controllers/activityLogController.js";
 import { namiController } from "../controllers/namiController.js";
 import { authenticate, requireRole } from "../middleware/index.js";
 
@@ -12,8 +13,25 @@ namiRouter.get("/rooms/:roomId", namiController.getRoom);
 namiRouter.get("/rooms/:roomId/bookings", namiController.getBookingsByRoom);
 namiRouter.get("/bookings", namiController.listBookings);
 namiRouter.get("/time-slots", namiController.listTimeSlots);
-namiRouter.post("/bookings", requireRole(["admin", "editor"]), namiController.createBooking);
-namiRouter.put("/bookings/:bookingId", requireRole(["admin", "editor"]), namiController.updateBooking);
-namiRouter.delete("/bookings/:bookingId", requireRole(["admin", "editor"]), namiController.cancelBooking);
+namiRouter.get(
+	"/activity-logs",
+	requireRole(["admin", "editor"]),
+	activityLogController.list,
+);
+namiRouter.post(
+	"/bookings",
+	requireRole(["admin", "editor", "usuario"]),
+	namiController.createBooking,
+);
+namiRouter.put(
+	"/bookings/:bookingId",
+	requireRole(["admin", "editor"]),
+	namiController.updateBooking,
+);
+namiRouter.delete(
+	"/bookings/:bookingId",
+	requireRole(["admin", "editor"]),
+	namiController.cancelBooking,
+);
 
 export { namiRouter };

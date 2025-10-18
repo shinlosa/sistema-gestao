@@ -10,7 +10,7 @@ const baseUserFields = {
     .regex(/[0-9]/, "Senha deve conter número"),
   name: z.string().trim().min(3, "Nome deve ter ao menos 3 caracteres"),
   email: z.string().trim().email("Email inválido"),
-  role: z.enum(["admin", "editor", "viewer", "coordinator", "professor", "staff"]),
+  role: z.enum(["admin", "editor", "usuario", "leitor"]),
   department: z.string().trim().max(100).optional(),
   status: z.enum(["active", "pending", "inactive", "suspended"]).optional(),
 };
@@ -21,7 +21,7 @@ export const updateUserSchema = z
   .object({
     name: z.string().trim().min(3).optional(),
     email: z.string().trim().email().optional(),
-    role: z.enum(["admin", "editor", "viewer", "coordinator", "professor", "staff"]).optional(),
+    role: z.enum(["admin", "editor", "usuario", "leitor"]).optional(),
     department: z.string().trim().max(100).optional(),
     status: z.enum(["active", "pending", "inactive", "suspended"]).optional(),
     password: baseUserFields.password.optional(),

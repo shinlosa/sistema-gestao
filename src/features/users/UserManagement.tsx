@@ -22,6 +22,7 @@ import { Alert, AlertDescription } from "../../components/ui/alert";
 import { toast } from "sonner";
 import { User } from "../../types/nami";
 import { SearchInputCard } from "../shared/SearchInputCard";
+import { ROLE_DISPLAY_CONFIG, roleSelectOptions } from "../../data/roleConfig";
 
 interface UserManagementProps {
   currentUser: User;
@@ -94,17 +95,8 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
   }, [users]);
 
   const getRoleBadge = (role: User["role"]) => {
-    const roleConfig: Record<User["role"], { label: string; className: string }> = {
-      admin: { label: "Administrador", className: "bg-purple-100 text-purple-800" },
-      coordinator: { label: "Coordenador", className: "bg-blue-100 text-blue-800" },
-      professor: { label: "Professor", className: "bg-green-100 text-green-800" },
-      staff: { label: "Funcionário", className: "bg-gray-100 text-gray-800" },
-      editor: { label: "Editor", className: "bg-yellow-100 text-yellow-800" },
-      viewer: { label: "Visualizador", className: "bg-teal-100 text-teal-800" },
-    };
-
-    const config = roleConfig[role];
-    return <Badge className={config.className}>{config.label}</Badge>;
+    const config = ROLE_DISPLAY_CONFIG[role];
+    return <Badge className={config.badgeClass}>{config.label}</Badge>;
   };
 
   const getStatusBadge = (status: User["status"]) => {
@@ -170,6 +162,14 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
     toast.success(`Usuário ${user?.name} foi removido permanentemente.`);
   };
 
+  const handleChangeRole = (userId: string, newRole: User["role"]) => {
+    const updated = users.map((user) => (user.id === userId ? { ...user, role: newRole } : user));
+    onUserUpdate(updated);
+
+    const user = users.find((u) => u.id === userId);
+    toast.success(`Função de ${user?.name} alterada com sucesso!`);
+  };
+
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("pt-BR", {
       day: "2-digit",
@@ -232,7 +232,36 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
           </div>
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-muted-foreground" />
-            {getRoleBadge(user.role)}
+            {showActions && user.id !== currentUser.id ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <div className="cursor-pointer">
+                    {getRoleBadge(user.role)}
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {roleSelectOptions.map((option) => {
+                    const config = ROLE_DISPLAY_CONFIG[option.value];
+                    const isCurrentRole = option.value === user.role;
+                    return (
+                      <DropdownMenuItem
+                        key={option.value}
+                        onClick={() => handleChangeRole(user.id, option.value)}
+                        disabled={isCurrentRole}
+                        className={isCurrentRole ? "opacity-60" : undefined}
+                      >
+                        <span className="inline-flex items-center gap-2">
+                          <span className={`h-2.5 w-2.5 rounded-full ${config.dotClass}`} />
+                          {config.label}
+                        </span>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              getRoleBadge(user.role)
+            )}
           </div>
           {user.department && (
             <div className="flex items-center gap-2">

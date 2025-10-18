@@ -56,13 +56,7 @@ export interface ActivityLog {
   affectedResource?: string;
 }
 
-export type UserRole =
-  | "admin"
-  | "editor"
-  | "viewer"
-  | "coordinator"
-  | "professor"
-  | "staff";
+export type UserRole = "admin" | "editor" | "usuario" | "leitor";
 
 export type UserStatus = "active" | "pending" | "inactive" | "suspended";
 
