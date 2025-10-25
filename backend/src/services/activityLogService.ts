@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { userRepository } from "../repositories/index.js";
-import { ActivityLog, NAMIBooking } from "../types/nami.js";
+import { ActivityLog, NAMIBooking, RevisionRequest } from "../types/nami.js";
 
 export type LogAction =
   | "Criar Reserva"
@@ -9,7 +9,9 @@ export type LogAction =
   | "Login"
   | "Logout"
   | "Gerenciar Usuário"
-  | "Sistema";
+  | "Sistema"
+  | "Aprovar Revisão"
+  | "Rejeitar Revisão";
 
 const inMemoryLogs: ActivityLog[] = [];
 
@@ -54,5 +56,19 @@ export const activityLogService = {
     const resource = `Sala ${booking.roomNumber}`;
     const details = `Reserva cancelada para ${booking.roomName} - ${booking.serviceType}`;
     this.register("Cancelar Reserva", details, actorId, resource);
+  },
+
+  registerRevisionApproval(actorId: string, request: RevisionRequest) {
+    const resource = `Sala ${request.roomNumber}`;
+    const details = `Revisão aprovada para ${request.roomName} - ${request.serviceType} • ${new Date(
+      request.date,
+    ).toLocaleDateString("pt-BR")} • ${request.timeSlots.join(", ")}`;
+    this.register("Aprovar Revisão", details, actorId, resource);
+  },
+
+  registerRevisionRejection(actorId: string, request: RevisionRequest) {
+    const resource = `Sala ${request.roomNumber}`;
+    const details = `Revisão rejeitada para ${request.roomName} - ${request.serviceType}`;
+    this.register("Rejeitar Revisão", details, actorId, resource);
   },
 };

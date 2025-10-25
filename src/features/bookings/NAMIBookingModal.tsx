@@ -9,8 +9,11 @@ import { Textarea } from "../../components/ui/textarea";
 import { CustomCalendar } from "./CustomCalendar";
 import { Checkbox } from "../../components/ui/checkbox";
 import { Badge } from "../../components/ui/badge";
-import { NAMIRoom, NAMIBooking, TimeSlot } from "../../types/nami";
+import { NAMIRoom, NAMIBooking, TimeSlot, User } from "../../types/nami";
+import { RevisionRequestModal } from "./RevisionRequestModal";
+import { api } from "../../lib/api";
 import { timeSlots } from "../../data/namiData";
+import { toast } from "sonner";
 
 interface NAMIBookingModalProps {
   room: NAMIRoom | null;
@@ -19,7 +22,7 @@ interface NAMIBookingModalProps {
   onSubmit: (booking: Omit<NAMIBooking, "id" | "status" | "createdAt">) => void;
   existingBookings?: NAMIBooking[];
   editingBooking?: NAMIBooking | null;
-  currentUser?: { name: string } | null;
+  currentUser?: Pick<User, "id" | "name" | "role"> | null;
   canManage?: boolean;
 }
 
@@ -38,8 +41,10 @@ export function NAMIBookingModal({
   const [responsible, setResponsible] = useState("");
   const [serviceType, setServiceType] = useState("");
   const [notes, setNotes] = useState("");
+  const [revisionOpen, setRevisionOpen] = useState(false);
 
   const isReadOnly = !canManage;
+  const isUsuario = currentUser?.role === "usuario";
 
   useEffect(() => {
     if (editingBooking) {
@@ -70,7 +75,8 @@ export function NAMIBookingModal({
   };
 
   const handleTimeSlotChange = (slotId: string, checked: boolean) => {
-    if (isReadOnly) {
+    // Permite que 'usuario' selecione horários (inclusive ocupados) para solicitar revisão
+    if (isReadOnly && !isUsuario) {
       return;
     }
 
@@ -172,6 +178,7 @@ export function NAMIBookingModal({
   };
 
   const occupiedSlots = selectedDate ? getOccupiedSlots(selectedDate) : [];
+  const hasConflict = occupiedSlots.some((s) => normalizedSelectedSlots.includes(s));
 
   const getTimeSlotLabel = (slot: TimeSlot) => {
     return `${slot.label} (${slot.start} - ${slot.end})`;
@@ -183,6 +190,29 @@ export function NAMIBookingModal({
       .filter((slot) => slot)
       .map((slot) => slot!.label)
       .join(", ");
+  };
+
+  const handleSendRevision = async (justification: string) => {
+    if (!room || !selectedDate || !currentUser) return;
+    try {
+      await api.createRevisionRequest({
+        roomId: room.id,
+        roomNumber: room.number,
+        roomName: room.name,
+        date: selectedDate.toISOString(),
+        timeSlots: normalizedSelectedSlots,
+        responsible,
+        serviceType,
+        justification,
+      });
+      toast.success("Solicitação de revisão enviada");
+      setRevisionOpen(false);
+      // Mantém o modal principal aberto para o usuário continuar navegando, mas podemos limpar seleção
+      // Limpar somente os horários para evitar múltiplos envios acidentais
+      setSelectedTimeSlots([]);
+    } catch (e) {
+      toast.error("Não foi possível enviar a revisão");
+    }
   };
 
   return (
@@ -215,7 +245,7 @@ export function NAMIBookingModal({
                   placeholder="Nome do responsável"
                   className="border-2 border-blue-200 focus:border-blue-500 bg-white"
                   required
-                  disabled={isReadOnly}
+                  disabled={isReadOnly && !isUsuario}
                 />
               </div>
 
@@ -228,7 +258,7 @@ export function NAMIBookingModal({
                   placeholder="Ex: Atendimento de 1ª vez (Pcte A)"
                   className="border-2 border-blue-200 focus:border-blue-500 bg-white"
                   required
-                  disabled={isReadOnly}
+                  disabled={isReadOnly && !isUsuario}
                 />
               </div>
 
@@ -241,7 +271,7 @@ export function NAMIBookingModal({
                   placeholder="Informações adicionais sobre a reserva"
                   className="border-2 border-blue-200 focus:border-blue-500 bg-white resize-none"
                   rows={3}
-                  disabled={isReadOnly}
+                  disabled={isReadOnly && !isUsuario}
                 />
               </div>
 
@@ -309,14 +339,14 @@ export function NAMIBookingModal({
                                 <Checkbox
                                   id={slot.id}
                                   checked={isSelected}
-                                  disabled={isOccupied || isReadOnly}
+                                  disabled={(isOccupied && !isUsuario) || (isReadOnly && !isUsuario)}
                                   onCheckedChange={(checked: CheckedState) =>
                                     handleTimeSlotChange(slot.id, checked === true)
                                   }
                                 />
                                 <Label
                                   htmlFor={slot.id}
-                                  className={`flex-1 text-sm ${isOccupied ? "text-muted-foreground line-through" : ""}`}
+                                  className={`flex-1 text-sm ${isOccupied ? "text-muted-foreground" : ""}`}
                                 >
                                   {getTimeSlotLabel(slot)}
                                 </Label>
@@ -363,14 +393,14 @@ export function NAMIBookingModal({
                                 <Checkbox
                                   id={slot.id}
                                   checked={isSelected}
-                                  disabled={isOccupied || isReadOnly}
+                                  disabled={(isOccupied && !isUsuario) || (isReadOnly && !isUsuario)}
                                   onCheckedChange={(checked: CheckedState) =>
                                     handleTimeSlotChange(slot.id, checked === true)
                                   }
                                 />
                                 <Label
                                   htmlFor={slot.id}
-                                  className={`flex-1 text-sm ${isOccupied ? "text-muted-foreground line-through" : ""}`}
+                                  className={`flex-1 text-sm ${isOccupied ? "text-muted-foreground" : ""}`}
                                 >
                                   {getTimeSlotLabel(slot)}
                                 </Label>
@@ -396,23 +426,41 @@ export function NAMIBookingModal({
           </div>
 
           <div className="flex justify-between sm:justify-end gap-4 pt-6 border-t flex-wrap">
-            {isReadOnly && (
+            {isReadOnly && !isUsuario && (
               <div className="text-sm text-muted-foreground">
                 Você possui acesso somente para consulta. Apenas administradores ou editores podem confirmar reservas.
+              </div>
+            )}
+            {isUsuario && (
+              <div className="text-sm text-muted-foreground">
+                Selecione horários ocupados para solicitar revisão desta reserva.
               </div>
             )}
             <Button type="button" variant="outline" onClick={onClose} size="lg">
               Cancelar
             </Button>
-            <Button type="submit" disabled={!canSubmit} size="lg">
-              {editingBooking
-                ? "Atualizar Reserva"
-                : canManage
-                ? "Confirmar Reserva"
-                : "Somente consulta"}
-            </Button>
+            {isUsuario && hasConflict && (
+              <Button type="button" variant="secondary" onClick={() => setRevisionOpen(true)} size="lg">
+                Solicitar revisão de reserva
+              </Button>
+            )}
+            {(!isUsuario || (isUsuario && !hasConflict)) && (
+              <Button type="submit" disabled={!canSubmit || (isUsuario && hasConflict)} size="lg">
+                {editingBooking
+                  ? "Atualizar Reserva"
+                  : canManage
+                  ? "Confirmar Reserva"
+                  : "Somente consulta"}
+              </Button>
+            )}
           </div>
         </form>
+      <RevisionRequestModal
+        open={revisionOpen}
+        onClose={() => setRevisionOpen(false)}
+        onSubmit={handleSendRevision}
+        defaultSummary={`${room?.name} • ${selectedDate?.toLocaleDateString("pt-BR")} • ${formatSelectedSlots()}`}
+      />
       </DialogContent>
     </Dialog>
   );

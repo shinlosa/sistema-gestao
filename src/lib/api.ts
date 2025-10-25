@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { Monitoring, NAMIBooking, NAMIRoom, User } from "../types/nami";
+import type { Monitoring, NAMIBooking, NAMIRoom, User, RevisionRequest, ActivityLog } from "../types/nami";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3333/api";
 
@@ -71,8 +71,42 @@ export interface BookingsResponse {
   bookings: ApiBooking[];
 }
 
+export interface CreateBookingBody {
+  roomId: string;
+  date: string; // yyyy-mm-dd or ISO
+  timeSlots: string[];
+  responsible: string;
+  serviceType: string;
+  notes?: string;
+}
+
+export interface UpdateBookingBody extends CreateBookingBody {}
+
 export interface UsersResponse {
   users: ApiUser[];
+}
+
+export interface RevisionRequestsResponse {
+  revisionRequests: Array<
+    Omit<RevisionRequest, "date" | "createdAt"> & { date: string; createdAt: string }
+  >;
+}
+
+export interface CreateRevisionRequestBody {
+  roomId: string;
+  roomNumber: number;
+  roomName: string;
+  date: string; // ISO
+  timeSlots: string[];
+  responsible: string;
+  serviceType: string;
+  justification: string;
+}
+
+export interface ActivityLogsResponse {
+  logs: Array<
+    Omit<ActivityLog, "timestamp"> & { timestamp: string }
+  >;
 }
 
 export const api = {
@@ -84,8 +118,32 @@ export const api = {
   getMonitorings: () => apiFetch<MonitoringsResponse>("/nami/monitorings"),
   getRooms: () => apiFetch<RoomsResponse>("/nami/rooms"),
   getBookings: () => apiFetch<BookingsResponse>("/nami/bookings"),
+  createBooking: (body: CreateBookingBody) =>
+    apiFetch<{ booking: ApiBooking }>("/nami/bookings", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateBooking: (bookingId: string, body: UpdateBookingBody) =>
+    apiFetch<{ booking: ApiBooking }>(`/nami/bookings/${bookingId}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  cancelBooking: (bookingId: string) =>
+    apiFetch<void>(`/nami/bookings/${bookingId}`, { method: "DELETE" }),
   getUsers: () => apiFetch<UsersResponse>("/auth/users"),
   getHealth: () => apiFetch<{ status: string }>("/health"),
+  getActivityLogs: () => apiFetch<ActivityLogsResponse>("/nami/activity-logs"),
+  // Revision Requests
+  getRevisionRequests: () => apiFetch<RevisionRequestsResponse>("/nami/revision-requests"),
+  createRevisionRequest: (body: CreateRevisionRequestBody) =>
+    apiFetch<{ request: CreateRevisionRequestBody & { id: string } }>("/nami/revision-requests", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  approveRevisionRequest: (id: string) =>
+    apiFetch<{ request: unknown }>(`/nami/revision-requests/${id}/approve`, { method: "POST" }),
+  rejectRevisionRequest: (id: string) =>
+    apiFetch<{ request: unknown }>(`/nami/revision-requests/${id}/reject`, { method: "POST" }),
 };
 
 export { API_BASE_URL, ApiError };

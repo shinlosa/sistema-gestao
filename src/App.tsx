@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Header,
   LoginScreen,
@@ -18,7 +18,27 @@ import { Toaster } from "./components/ui/sonner";
 import { monitorings as fallbackMonitorings, namiRooms as fallbackRooms } from "./data/namiData";
 import { users as fallbackUsers } from "./data/userData";
 import { NAMIRoom, NAMIBooking, ActivityLog as ActivityLogType, User, AuthState, Monitoring } from "./types/nami";
-import { api, ApiError, type ApiBooking, type ApiUser } from "./lib/api";
+import {
+  api,
+  ApiError,
+  type ActivityLogsResponse,
+  type ApiBooking,
+  type ApiUser,
+} from "./lib/api";
+
+const parseBookingDate = (value: string): Date => {
+  if (!value) {
+    return new Date();
+  }
+
+  const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
+  if (dateOnlyPattern.test(value)) {
+    const [year, month, day] = value.split("-").map((part) => Number(part));
+    return new Date(year, month - 1, day);
+  }
+
+  return new Date(value);
+};
 
 const mapUserFromApi = (user: ApiUser): User => ({
   ...user,
@@ -29,8 +49,15 @@ const mapUserFromApi = (user: ApiUser): User => ({
 
 const mapBookingFromApi = (booking: ApiBooking): NAMIBooking => ({
   ...booking,
-  date: new Date(booking.date),
+  date: parseBookingDate(booking.date),
   createdAt: new Date(booking.createdAt),
+});
+
+const isActiveBooking = (booking: NAMIBooking) => booking.status !== "cancelled";
+const shouldDisplayLog = (log: ActivityLogType) => log.action.toLowerCase() !== "login";
+const mapActivityLogFromApi = (log: ActivityLogsResponse["logs"][number]): ActivityLogType => ({
+  ...log,
+  timestamp: new Date(log.timestamp),
 });
 
 export default function App() {
@@ -60,8 +87,37 @@ export default function App() {
   const userRole = authState.user?.role ?? "leitor";
   const canCreateBookings = ["admin", "editor", "usuario"].includes(userRole);
   const canEditBookings = ["admin", "editor"].includes(userRole);
-  const canViewBookingDetails = true;
+  // Only admins and editors can access activity logs
   const canAccessLogs = ["admin", "editor"].includes(userRole);
+
+  const fetchBookings = useCallback(async () => {
+    const res = await api.getBookings();
+    return res.bookings.map(mapBookingFromApi).filter(isActiveBooking);
+  }, []);
+
+  const fetchActivityLogs = useCallback(async () => {
+    if (!canAccessLogs) return [] as ActivityLogType[];
+    const res = await api.getActivityLogs();
+    return res.logs.map(mapActivityLogFromApi).filter(shouldDisplayLog);
+  }, [canAccessLogs]);
+
+  const refreshBookings = useCallback(async () => {
+    try {
+      const nextBookings = await fetchBookings();
+      setBookings(nextBookings);
+    } catch (error) {
+      console.error("Erro ao atualizar reservas", error);
+    }
+  }, [fetchBookings]);
+
+  const refreshActivityLogs = useCallback(async () => {
+    try {
+      const logs = await fetchActivityLogs();
+      setActivityLogs(logs);
+    } catch (error) {
+      console.error("Erro ao atualizar logs", error);
+    }
+  }, [fetchActivityLogs]);
 
   useEffect(() => {
     if (!canAccessLogs && activeTab === "logs") {
@@ -79,31 +135,44 @@ export default function App() {
     const loadData = async () => {
       setIsDataLoading(true);
       try {
-        const [monitoringsResponse, roomsResponse, bookingsResponse, usersResponse] = await Promise.all([
+        // Sempre buscar monitoramentos, salas e reservas
+        const [monitoringsResponse, roomsResponse, nextBookings] = await Promise.all([
           api.getMonitorings(),
           api.getRooms(),
-          api.getBookings(),
-          api.getUsers(),
+          fetchBookings(),
         ]);
 
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
 
         setMonitorings(monitoringsResponse.monitorings);
         setRooms(roomsResponse.rooms);
-        setBookings(bookingsResponse.bookings.map(mapBookingFromApi));
-        setUsers(usersResponse.users.map(mapUserFromApi));
-        setDataError(null);
+        setBookings(nextBookings);
+
+        if (!cancelled && authState.user?.role === "admin") {
+          try {
+            const usersResponse = await api.getUsers();
+            if (!cancelled) {
+              setUsers(usersResponse.users.map(mapUserFromApi));
+            }
+          } catch (err) {
+            if (!(err instanceof ApiError && err.status === 403)) {
+              console.error("Erro ao obter usuários:", err);
+            }
+          }
+        }
+
+        if (!cancelled) {
+          await refreshActivityLogs();
+          setDataError(null);
+        }
       } catch (error) {
         if (cancelled) return;
         console.error("Erro ao carregar dados do backend", error);
 
         if (error instanceof ApiError) {
-          if (error.status === 403) {
-            // Usuário sem permissão para o endpoint. Mantemos dados locais sem exibir alerta.
-            setDataError(null);
-          } else {
-            setDataError(error.message);
-          }
+          setDataError(error.status === 403 ? null : error.message);
         } else {
           setDataError("Não foi possível carregar dados do servidor. Utilizando dados locais.");
         }
@@ -119,12 +188,29 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [authState.isAuthenticated]);
+  }, [authState.isAuthenticated, authState.user?.role, fetchBookings, refreshActivityLogs]);
+
+  // Eventos de atualização global pós-ação do admin
+  useEffect(() => {
+    const onRefreshBookings = () => {
+      refreshBookings().catch(() => {});
+    };
+    const onRefreshLogs = () => {
+      if (!canAccessLogs) return;
+      refreshActivityLogs().catch(() => {});
+    };
+
+    window.addEventListener("nami:refresh-bookings", onRefreshBookings);
+    if (canAccessLogs) {
+      window.addEventListener("nami:refresh-logs", onRefreshLogs);
+    }
+    return () => {
+      window.removeEventListener("nami:refresh-bookings", onRefreshBookings);
+      window.removeEventListener("nami:refresh-logs", onRefreshLogs);
+    };
+  }, [canAccessLogs, refreshActivityLogs, refreshBookings]);
 
   const handleRoomBooking = (room: NAMIRoom) => {
-    if (!canViewBookingDetails) {
-      return;
-    }
     setSelectedRoom(room);
     setEditingBooking(null);
     setIsBookingModalOpen(true);
@@ -134,7 +220,7 @@ export default function App() {
     if (!canEditBookings) {
       return;
     }
-  const room = rooms.find((candidate) => candidate.id === booking.roomId);
+    const room = rooms.find((candidate) => candidate.id === booking.roomId);
     if (room) {
       setSelectedRoom(room);
       setEditingBooking(booking);
@@ -184,86 +270,71 @@ export default function App() {
       affectedResource,
     };
     
-    setActivityLogs(prev => [newLog, ...prev]);
+    setActivityLogs((prev) => (shouldDisplayLog(newLog) ? [newLog, ...prev] : prev));
   };
 
-  const handleBookingSubmit = (bookingData: Omit<NAMIBooking, "id" | "status" | "createdAt">) => {
-    if (editingBooking && !canEditBookings) {
-      return;
-    }
-    if (!editingBooking && !canCreateBookings) {
-      return;
-    }
-    if (editingBooking) {
-      const updatedBooking: NAMIBooking = {
-        ...bookingData,
-        id: editingBooking.id,
-        status: "confirmed",
-        createdAt: editingBooking.createdAt,
-      };
+  const handleBookingSubmit = async (bookingData: Omit<NAMIBooking, "id" | "status" | "createdAt">) => {
+    if (editingBooking && !canEditBookings) return;
+    if (!editingBooking && !canCreateBookings) return;
 
-      setBookings(prev => 
-        prev.map(booking => 
-          booking.id === editingBooking.id ? updatedBooking : booking
-        )
-      );
-      
-      addActivityLog(
-        "Editar Reserva",
-        `Reserva editada para ${bookingData.roomName} - ${bookingData.serviceType}`,
-        `Sala ${bookingData.roomNumber}`
-      );
-      
-      toast.success("Reserva atualizada com sucesso!", {
-        description: `Sala ${bookingData.roomNumber} atualizada para ${bookingData.date.toLocaleDateString("pt-BR")}`,
-      });
-    } else {
-      const newBooking: NAMIBooking = {
-        ...bookingData,
-        id: Date.now().toString(),
-        status: "confirmed",
-        createdAt: new Date(),
-      };
-
-      setBookings(prev => [...prev, newBooking]);
-      
-      addActivityLog(
-        "Criar Reserva",
-        `Reserva criada para ${bookingData.roomName} - ${bookingData.serviceType}`,
-        `Sala ${bookingData.roomNumber}`
-      );
-      
-      toast.success("Reserva confirmada com sucesso!", {
-        description: `Sala ${bookingData.roomNumber} reservada para ${bookingData.date.toLocaleDateString("pt-BR")}`,
-      });
+    try {
+      if (editingBooking) {
+        const res = await api.updateBooking(editingBooking.id, {
+          roomId: bookingData.roomId,
+          date: bookingData.date.toISOString(),
+          timeSlots: bookingData.timeSlots,
+          responsible: bookingData.responsible,
+          serviceType: bookingData.serviceType,
+          notes: bookingData.notes,
+        });
+        const updated = mapBookingFromApi(res.booking);
+        setBookings((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+        toast.success("Reserva atualizada com sucesso!", {
+          description: `Sala ${updated.roomNumber} em ${updated.date.toLocaleDateString("pt-BR")}`,
+        });
+      } else {
+        const res = await api.createBooking({
+          roomId: bookingData.roomId,
+          date: bookingData.date.toISOString(),
+          timeSlots: bookingData.timeSlots,
+          responsible: bookingData.responsible,
+          serviceType: bookingData.serviceType,
+          notes: bookingData.notes,
+        });
+        const created = mapBookingFromApi(res.booking);
+        setBookings((prev) => [...prev, created]);
+        toast.success("Reserva confirmada com sucesso!", {
+          description: `Sala ${created.roomNumber} reservada para ${created.date.toLocaleDateString("pt-BR")}`,
+        });
+      }
+      window.dispatchEvent(new Event("nami:refresh-logs"));
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Falha ao salvar a reserva");
+      }
     }
   };
 
-  const handleCancelBooking = (bookingId: string) => {
-    if (!canEditBookings) {
-      return;
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!canEditBookings) return;
+    try {
+      await api.cancelBooking(bookingId);
+      setBookings((prev) => prev.filter((b) => b.id !== bookingId));
+      toast.success("Reserva cancelada com sucesso!");
+      window.dispatchEvent(new Event("nami:refresh-logs"));
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Falha ao cancelar a reserva");
+      }
     }
-    const booking = bookings.find(b => b.id === bookingId);
-    
-    setBookings(prev => prev.filter(booking => booking.id !== bookingId));
-    
-    if (booking) {
-      addActivityLog(
-        "Cancelar Reserva",
-        `Reserva cancelada para ${booking.roomName} - ${booking.serviceType}`,
-        `Sala ${booking.roomNumber}`
-      );
-    }
-    
-    toast.success("Reserva cancelada com sucesso!");
   };
 
   const handlePrintBookingReport = () => {
-    addActivityLog(
-      "Imprimir Relatório",
-      "Relatório de reservas exportado para PDF",
-      "Reservas"
-    );
+    addActivityLog("Imprimir Relatório", "Relatório de reservas exportado para PDF", "Reservas");
     window.print();
   };
 

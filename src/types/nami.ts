@@ -58,6 +58,24 @@ export interface ActivityLog {
   affectedResource?: string;
 }
 
+export type RevisionRequestStatus = "open" | "approved" | "rejected";
+
+export interface RevisionRequest {
+  id: string;
+  roomId: string;
+  roomNumber: number;
+  roomName: string;
+  date: Date;
+  timeSlots: string[];
+  responsible: string;
+  serviceType: string;
+  justification: string;
+  requestedByUserId: string;
+  requestedByName: string;
+  status: RevisionRequestStatus;
+  createdAt: Date;
+}
+
 export interface User {
   id: string;
   username: string;
