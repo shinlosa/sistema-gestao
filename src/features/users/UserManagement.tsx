@@ -9,6 +9,8 @@ import {
   MoreVertical,
   Check,
   X,
+  Trash2,
+  UserX,
   AlertCircle,
   ClipboardList,
 } from "lucide-react";
@@ -52,10 +54,9 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
     });
   }, [users, searchTermLower]);
 
-  const { activeUsers, pendingUsers, suspendedUsers } = useMemo(() => {
+  const { activeUsers, pendingUsers } = useMemo(() => {
     const active: User[] = [];
     const pending: User[] = [];
-    const suspended: User[] = [];
 
     filteredUsers.forEach((user) => {
       switch (user.status) {
@@ -65,13 +66,10 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
         case "pending":
           pending.push(user);
           break;
-        case "suspended":
-          suspended.push(user);
-          break;
       }
     });
 
-    return { activeUsers: active, pendingUsers: pending, suspendedUsers: suspended };
+    return { activeUsers: active, pendingUsers: pending };
   }, [filteredUsers]);
 
   const { totalActive, totalPending } = useMemo(() => {
@@ -99,33 +97,73 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
     return <Badge className={config.badgeClass}>{config.label}</Badge>;
   };
 
+  // Suspender agora realiza remoção permanente — use o fluxo de remoção
+
+  const handleDeleteUser = (userId: string) => {
+    if (userId === currentUser.id) {
+      toast.error("Você não pode deletar sua própria conta!");
+      return;
+    }
+
+    (async () => {
+      try {
+        await api.deleteUser(userId);
+        const user = users.find((u) => u.id === userId);
+        const updated = users.filter((u) => u.id !== userId);
+        onUserUpdate(updated);
+        toast.success(`Usuário ${user?.name} foi removido permanentemente.`);
+      } catch (e) {
+        toast.error("Erro ao remover usuário");
+      }
+    })();
+  };
+
   const getStatusBadge = (status: User["status"]) => {
     switch (status) {
       case "active":
         return <Badge className="bg-available text-available-foreground">Ativo</Badge>;
       case "pending":
         return <Badge className="bg-occupied text-occupied-foreground">Pendente</Badge>;
-      case "suspended":
-        return <Badge variant="destructive">Suspenso</Badge>;
       default:
         return null;
     }
   };
 
   const handleApproveUser = (userId: string) => {
-    const updated = users.map((user) => (user.id === userId ? { ...user, status: "active" as const } : user));
-    onUserUpdate(updated);
-
-    const user = users.find((u) => u.id === userId);
-    toast.success(`Usuário ${user?.name} aprovado com sucesso!`);
+    (async () => {
+      try {
+        const res = await api.approveUser(userId);
+        const updatedUser = res.user;
+        const updated = users.map((u) =>
+          u.id === userId
+            ? {
+                ...u,
+                status: updatedUser.status as User["status"],
+                approvedBy: updatedUser.approvedBy,
+                approvedAt: updatedUser.approvedAt ? new Date(updatedUser.approvedAt) : u.approvedAt,
+              }
+            : u,
+        );
+        onUserUpdate(updated);
+        toast.success(`Usuário ${updatedUser.name} aprovado com sucesso!`);
+      } catch (e) {
+        toast.error("Erro ao aprovar usuário");
+      }
+    })();
   };
 
   const handleRejectUser = (userId: string) => {
-    const user = users.find((u) => u.id === userId);
-    const updated = users.filter((user) => user.id !== userId);
-    onUserUpdate(updated);
-
-    toast.success(`Solicitação de ${user?.name} rejeitada.`);
+    (async () => {
+      try {
+        await api.rejectUser(userId);
+        const user = users.find((u) => u.id === userId);
+        const updated = users.filter((user) => user.id !== userId);
+        onUserUpdate(updated);
+        toast.success(`Solicitação de ${user?.name} rejeitada.`);
+      } catch (e) {
+        toast.error("Erro ao rejeitar solicitação");
+      }
+    })();
   };
 
   // Revisões: carregar e ações
@@ -174,11 +212,18 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
   };
 
   const handleChangeRole = (userId: string, newRole: User["role"]) => {
-    const updated = users.map((user) => (user.id === userId ? { ...user, role: newRole } : user));
-    onUserUpdate(updated);
-
-    const user = users.find((u) => u.id === userId);
-    toast.success(`Função de ${user?.name} alterada com sucesso!`);
+    (async () => {
+      try {
+        const res = await api.changeUserRole(userId, newRole as string);
+        const updatedUser = res.user;
+        const updated = users.map((u) => (u.id === userId ? { ...u, role: updatedUser.role as User["role"] } : u));
+        onUserUpdate(updated);
+        const user = users.find((u) => u.id === userId);
+        toast.success(`Função de ${user?.name} alterada com sucesso!`);
+      } catch (e) {
+        toast.error("Erro ao alterar função do usuário");
+      }
+    })();
   };
 
   const formatDate = (date: Date) => {
@@ -205,7 +250,7 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {getStatusBadge(user.status)}
+                {getStatusBadge(user.status)}
           </div>
         </div>
 
@@ -216,35 +261,22 @@ export function UserManagement({ currentUser, users, onUserUpdate }: UserManagem
           </div>
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-muted-foreground" />
-            {showActions && user.id !== currentUser.id ? (
+            {getRoleBadge(user.role)}
+            {showActions && user.id !== currentUser.id && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <div className="cursor-pointer">
-                    {getRoleBadge(user.role)}
-                  </div>
+                  <Button variant="ghost" size="sm" className="ml-2">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
-                  {roleSelectOptions.map((option) => {
-                    const config = ROLE_DISPLAY_CONFIG[option.value];
-                    const isCurrentRole = option.value === user.role;
-                    return (
-                      <DropdownMenuItem
-                        key={option.value}
-                        onClick={() => handleChangeRole(user.id, option.value)}
-                        disabled={isCurrentRole}
-                        className={isCurrentRole ? "opacity-60" : undefined}
-                      >
-                        <span className="inline-flex items-center gap-2">
-                          <span className={`h-2.5 w-2.5 rounded-full ${config.dotClass}`} />
-                          {config.label}
-                        </span>
-                      </DropdownMenuItem>
-                    );
-                  })}
+                  <DropdownMenuItem onClick={() => handleDeleteUser(user.id)} className="text-destructive">
+                    <span className="inline-flex items-center gap-2">
+                      <Trash2 className="h-4 w-4" /> Remover
+                    </span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
-              getRoleBadge(user.role)
             )}
           </div>
           {user.department && (

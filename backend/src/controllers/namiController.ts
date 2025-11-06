@@ -5,7 +5,18 @@ import { namiService } from "../services/namiService.js";
 
 export const namiController = {
   listMonitorings: (_request: Request, response: Response) => response.json({ monitorings: namiService.listMonitorings() }),
-  listRooms: (_request: Request, response: Response) => response.json({ rooms: namiService.listRooms() }),
+  listRooms: (request: Request, response: Response) => {
+    const page = Math.max(1, Number(request.query.page ?? 1));
+    const perPage = Math.max(1, Math.min(100, Number(request.query.perPage ?? 20)));
+
+    const all = namiService.listRooms();
+    const total = all.length;
+    const totalPages = Math.max(1, Math.ceil(total / perPage));
+    const offset = (page - 1) * perPage;
+    const rooms = all.slice(offset, offset + perPage);
+
+    return response.json({ rooms, meta: { total, page, perPage, totalPages } });
+  },
   getRoom: (request: Request, response: Response) => {
     const room = namiService.getRoomById(request.params.roomId);
 
@@ -15,7 +26,18 @@ export const namiController = {
 
     return response.json({ room });
   },
-  listBookings: (_request: Request, response: Response) => response.json({ bookings: namiService.listBookings() }),
+  listBookings: (request: Request, response: Response) => {
+    const page = Math.max(1, Number(request.query.page ?? 1));
+    const perPage = Math.max(1, Math.min(100, Number(request.query.perPage ?? 20)));
+
+    const all = namiService.listBookings();
+    const total = all.length;
+    const totalPages = Math.max(1, Math.ceil(total / perPage));
+    const offset = (page - 1) * perPage;
+    const bookings = all.slice(offset, offset + perPage);
+
+    return response.json({ bookings, meta: { total, page, perPage, totalPages } });
+  },
   getBookingsByRoom: (request: Request, response: Response) => {
     const bookings = namiService.getBookingsByRoom(request.params.roomId);
     return response.json({ bookings });

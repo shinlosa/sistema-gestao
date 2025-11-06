@@ -105,6 +105,63 @@ export const userService = {
     return rest;
   },
 
+  changeRole(userId: string, newRole: User["role"], _actorId: string): Omit<User, "passwordHash"> {
+    const existing = userRepository.findById(userId);
+    if (!existing) {
+      throw ApiError.notFound("Usuário não encontrado");
+    }
+
+    const updated: User = {
+      ...existing,
+      role: newRole,
+    };
+
+    const saved = userRepository.update(updated);
+    const { passwordHash: _password, ...rest } = saved;
+    return rest;
+  },
+
+  approve(userId: string, actorId: string): Omit<User, "passwordHash"> {
+    const existing = userRepository.findById(userId);
+    if (!existing) {
+      throw ApiError.notFound("Usuário não encontrado");
+    }
+
+    const now = new Date().toISOString();
+    const updated: User = {
+      ...existing,
+      status: "active",
+      approvedBy: actorId,
+      approvedAt: now,
+    };
+
+    const saved = userRepository.update(updated);
+    const { passwordHash: _password, ...rest } = saved;
+    return rest;
+  },
+
+  reject(userId: string, _actorId: string): void {
+    const existing = userRepository.findById(userId);
+    if (!existing) {
+      throw ApiError.notFound("Usuário não encontrado");
+    }
+
+    // For a reject, remove the requested user record
+    userRepository.delete(userId);
+  },
+
+  suspend(userId: string, actorId: string): void {
+    // When requested to "suspend" a user, the system now deletes the account
+    // instead of marking it suspended. Reuse the existing delete logic which
+    // enforces self-deletion protections and not-found checks.
+    userService.delete(userId, actorId);
+  },
+
+  reactivate(_userId: string, _actorId: string): Omit<User, "passwordHash"> {
+    // Re-activation is not supported: accounts are deleted permanently.
+    throw ApiError.badRequest("Reativação não suportada: contas são excluídas permanentemente");
+  },
+
   delete(userId: string, actorId: string): void {
     if (userId === actorId) {
       throw ApiError.badRequest("Não é possível excluir o próprio usuário");

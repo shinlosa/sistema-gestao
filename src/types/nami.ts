@@ -84,7 +84,7 @@ export interface User {
   email: string;
   role: 'admin' | 'editor' | 'usuario' | 'leitor';
   department?: string;
-  status: 'active' | 'pending' | 'inactive' | 'suspended';
+  status: 'active' | 'pending' | 'inactive';
   createdAt: Date;
   lastLogin?: Date;
   requestedBy?: string;

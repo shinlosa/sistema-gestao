@@ -18,14 +18,22 @@ export function MonitoringSection({ monitoring, onRoomBooking, bookings = [], se
 
   const getRoomCurrentBookings = (roomId: string) => {
     const today = new Date();
-    return bookings
+    const todayDateString = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    const currentBookings = bookings
       .filter(
-        (booking) =>
-          booking.roomId === roomId &&
-          booking.date.toDateString() === today.toDateString() &&
-          booking.status === "confirmed",
+        (booking) => {
+          const bookingDateString = booking.date.toISOString().split('T')[0]; // YYYY-MM-DD
+          return (
+            booking.roomId === roomId &&
+            bookingDateString === todayDateString &&
+            booking.status === "confirmed"
+          );
+        },
       )
       .flatMap((booking) => booking.timeSlots);
+    
+    return currentBookings;
   };
 
   const formatAllowedPeriods = () => {

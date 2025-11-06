@@ -36,9 +36,12 @@ npm run dev
 Configure `backend/.env` (copie de `.env.example` se necessário) para ajustar porta e origens de CORS. O frontend lê a URL da API do arquivo `.env` na raiz via `VITE_API_BASE_URL`.
 
 ## Dados de exemplo
-- 3 monitoramentos com 15 salas vinculadas
-- 3 salas independentes (Salas 12, 13 e 18) reserváveis em qualquer período
-- Grade diária com 10 blocos de 50 minutos (manhã e tarde)
+- 3 monitoramentos com 18 salas vinculadas (15 salas numéricas + 3 escritórios)
+- Sala 1-5: Monitoramento 1 (capacidade 8 pessoas)
+- Sala 6-10: Monitoramento 2 (capacidade 10 pessoas)
+- Sala 11-15: Monitoramento 3 (capacidade 12 pessoas)
+- Sala 101-103: Escritórios independentes (capacidade 2 pessoas)
+- Grade horária com 5 blocos combinados de 100 minutos cada (MAB, MCD, MEF, TAB, TCD)
 
 As reservas e usuários são mantidos em memória durante a execução. Reiniciar o servidor limpa os dados.
 

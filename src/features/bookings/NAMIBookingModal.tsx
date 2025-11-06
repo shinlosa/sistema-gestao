@@ -62,17 +62,27 @@ export function NAMIBookingModal({
     }
   }, [room, editingBooking]);
 
-  const getOccupiedSlots = (date: Date) => {
-    return existingBookings
+  const occupiedSlots = useMemo(() => {
+    if (!selectedDate || !room) return [];
+    
+    const dateString = selectedDate.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    const occupied = existingBookings
       .filter(
-        (booking) =>
-          booking.roomId === room?.id &&
-          booking.date.toDateString() === date.toDateString() &&
-          booking.status === "confirmed" &&
-          (!editingBooking || booking.id !== editingBooking.id),
+        (booking) => {
+          const bookingDateString = booking.date.toISOString().split('T')[0];
+          return (
+            booking.roomId === room.id &&
+            bookingDateString === dateString &&
+            booking.status === "confirmed" &&
+            (!editingBooking || booking.id !== editingBooking.id)
+          );
+        },
       )
       .flatMap((booking) => booking.timeSlots);
-  };
+    
+    return occupied;
+  }, [selectedDate, room, existingBookings, editingBooking]);
 
   const handleTimeSlotChange = (slotId: string, checked: boolean) => {
     // Permite que 'usuario' selecione horários (inclusive ocupados) para solicitar revisão
@@ -95,7 +105,7 @@ export function NAMIBookingModal({
     }
 
     return {
-      dateString: editingBooking.date.toDateString(),
+      dateString: editingBooking.date.toISOString().split('T')[0], // YYYY-MM-DD
       timeSlots: [...editingBooking.timeSlots].sort(),
       responsible: editingBooking.responsible,
       serviceType: editingBooking.serviceType,
@@ -108,7 +118,9 @@ export function NAMIBookingModal({
       return true;
     }
 
-    const dateChanged = selectedDate ? selectedDate.toDateString() !== originalBookingSnapshot.dateString : true;
+    const dateChanged = selectedDate 
+      ? selectedDate.toISOString().split('T')[0] !== originalBookingSnapshot.dateString 
+      : true;
 
     const slotsChanged = (() => {
       const originalSlots = originalBookingSnapshot.timeSlots;
@@ -177,7 +189,6 @@ export function NAMIBookingModal({
     onClose();
   };
 
-  const occupiedSlots = selectedDate ? getOccupiedSlots(selectedDate) : [];
   const hasConflict = occupiedSlots.some((s) => normalizedSelectedSlots.includes(s));
 
   const getTimeSlotLabel = (slot: TimeSlot) => {

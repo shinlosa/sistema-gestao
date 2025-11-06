@@ -31,10 +31,11 @@ const parseBookingDate = (value: string): Date => {
     return new Date();
   }
 
+  // Parse date in format YYYY-MM-DD or ISO string
+  // Always create date at noon UTC to avoid timezone issues
   const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
   if (dateOnlyPattern.test(value)) {
-    const [year, month, day] = value.split("-").map((part) => Number(part));
-    return new Date(year, month - 1, day);
+    return new Date(value + 'T12:00:00.000Z');
   }
 
   return new Date(value);
@@ -434,21 +435,29 @@ export default function App() {
                 </Card>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredIndependentRooms.map((room) => (
-                    <NAMIRoomCard
-                      key={room.id}
-                      room={room}
-                      onBooking={handleRoomBooking}
-                      currentBookings={bookings
-                        .filter(booking => 
-                          booking.roomId === room.id && 
-                          booking.date.toDateString() === new Date().toDateString() &&
-                          booking.status === 'confirmed'
-                        )
-                        .flatMap(booking => booking.timeSlots)
-                      }
-                    />
-                  ))}
+                  {filteredIndependentRooms.map((room) => {
+                    const today = new Date();
+                    const todayDateString = today.toISOString().split('T')[0];
+                    
+                    return (
+                      <NAMIRoomCard
+                        key={room.id}
+                        room={room}
+                        onBooking={handleRoomBooking}
+                        currentBookings={bookings
+                          .filter(booking => {
+                            const bookingDateString = booking.date.toISOString().split('T')[0];
+                            return (
+                              booking.roomId === room.id && 
+                              bookingDateString === todayDateString &&
+                              booking.status === 'confirmed'
+                            );
+                          })
+                          .flatMap(booking => booking.timeSlots)
+                        }
+                      />
+                    );
+                  })}
                 </div>
               </TabsContent>
             </Tabs>

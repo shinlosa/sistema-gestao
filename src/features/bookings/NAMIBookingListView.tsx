@@ -1,4 +1,4 @@
-import { Calendar as CalendarIcon, Filter, Printer, MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, Filter, Printer, Settings, Eye, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
 import { Button } from "../../components/ui/button";
@@ -266,7 +266,7 @@ export function NAMIBookingListView({
                     <th className="px-4 py-3 text-left font-medium">Criado por</th>
                     <th className="px-4 py-3 text-left font-medium">Observações</th>
                     {canManage && (
-                      <th className="px-4 py-3 text-right font-medium sticky right-0 bg-muted/60">Ações</th>
+                      <th className="px-4 py-3 text-right font-medium">Ações</th>
                     )}
                   </tr>
                 </thead>
@@ -319,11 +319,11 @@ export function NAMIBookingListView({
                         )}
                       </td>
                       {canManage && (
-                        <td className="px-3 py-4 align-top text-right sticky right-0 bg-background border-l border-border">
+                        <td className="px-3 py-4 align-top text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="p-2">
-                                <MoreHorizontal className="h-4 w-4" />
+                                <Settings className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">

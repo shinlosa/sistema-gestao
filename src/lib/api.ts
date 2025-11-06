@@ -132,6 +132,18 @@ export const api = {
     apiFetch<void>(`/nami/bookings/${bookingId}`, { method: "DELETE" }),
   getUsers: () => apiFetch<UsersResponse>("/auth/users"),
   getHealth: () => apiFetch<{ status: string }>("/health"),
+  // User management actions
+  changeUserRole: (userId: string, role: string) =>
+    apiFetch<{ user: ApiUser }>(`/users/${userId}/role`, {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    }),
+  approveUser: (userId: string) => apiFetch<{ user: ApiUser }>(`/users/${userId}/approve`, { method: "POST" }),
+  rejectUser: (userId: string) => apiFetch<void>(`/users/${userId}/reject`, { method: "POST" }),
+  suspendUser: (userId: string) => apiFetch<void>(`/users/${userId}`, { method: "DELETE" }),
+  reactivateUser: (userId: string) => apiFetch<{ user: ApiUser }>(`/users/${userId}/reactivate`, { method: "POST" }),
+  deleteUser: (userId: string) => apiFetch<void>(`/users/${userId}`, { method: "DELETE" }),
+  logout: () => apiFetch<void>(`/auth/logout`, { method: "POST" }),
   getActivityLogs: () => apiFetch<ActivityLogsResponse>("/nami/activity-logs"),
   // Revision Requests
   getRevisionRequests: () => apiFetch<RevisionRequestsResponse>("/nami/revision-requests"),

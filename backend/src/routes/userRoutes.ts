@@ -11,5 +11,10 @@ userRouter.get("/", userController.list);
 userRouter.post("/", asyncHandler(userController.create));
 userRouter.put("/:userId", asyncHandler(userController.update));
 userRouter.delete("/:userId", userController.delete);
+userRouter.patch("/:userId/role", userController.changeRole);
+userRouter.post("/:userId/approve", userController.approve);
+userRouter.post("/:userId/reject", userController.reject);
+userRouter.post("/:userId/suspend", userController.suspend);
+userRouter.post("/:userId/reactivate", userController.reactivate);
 
 export { userRouter };

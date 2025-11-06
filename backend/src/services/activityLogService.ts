@@ -22,7 +22,14 @@ export const activityLogService = {
     return inMemoryLogs.map((log) => cloneLog(log));
   },
 
-  register(action: LogAction, details: string, actorId: string, affectedResource?: string): ActivityLog {
+  register(
+    action: LogAction,
+    details: string,
+    actorId: string,
+    affectedResource?: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): ActivityLog {
     const user = userRepository.findById(actorId);
     const now = new Date().toISOString();
 
@@ -34,6 +41,8 @@ export const activityLogService = {
       details,
       timestamp: now,
       affectedResource,
+      ipAddress,
+      userAgent,
     };
 
     inMemoryLogs.unshift(log);

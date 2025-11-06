@@ -30,27 +30,32 @@ Sistema web desktop para automatizar o processo de reserva de salas do curso de 
 ### 1.1 Estrutura de Dados
 
 #### Salas (NAMIRoom)
-- 17 salas organizadas em 3 monitoramentos principais
-- Salas independentes (não vinculadas a monitoramentos) – agora duas unidades (Salas 12 e 13)
-- Atributos: ID, número, nome, capacidade, descrição, responsável padrão, disponibilidade
+- 18 salas no total organizadas em 3 monitoramentos
+- 3 escritórios independentes (um por monitoramento - Salas 101, 102, 103)
+- 15 salas vinculadas aos monitoramentos (Salas 1-15)
+- Atributos: ID, número, nome, capacidade, descrição, responsável padrão, disponibilidade, flag isIndependent
 - **Plataforma:** Web Desktop
 
 #### Monitoramentos (Monitoring)
-- Agrupamento lógico de salas por tipo de atendimento
-- Responsáveis específicos por monitoramento
-- Períodos permitidos para reserva (matutino/vespertino)
+- 3 monitoramentos principais (Monitoramento 1, 2 e 3)
+- Cada monitoramento agrupa 5 salas numéricas + 1 escritório
+- Períodos permitidos: todos os blocos (MAB, MCD, MEF, TAB, TCD)
+- Todos os monitoramentos são reserváveis
 
 #### Reservas (NAMIBooking)
-- Sistema de períodos fracionados (M.A até T.D - 10 períodos diários)
-- Status: confirmada, pendente, cancelada
-- Informações: sala, data, horários, responsável, tipo de serviço, observações
+- Sistema de blocos combinados (5 blocos diários: MAB, MCD, MEF, TAB, TCD)
+- Status: confirmed, pending, cancelled
+- Informações: sala, data, blocos de horário, responsável, tipo de serviço, observações
 - Rastreabilidade: quem criou e quando
+- **Validação de conflitos:** Sistema impede reserva de blocos já ocupados na mesma sala/data
+- **Timezone handling:** Datas em formato UTC noon (12:00:00.000Z) para evitar problemas de fuso horário
 
 #### Usuários (User)
 - Roles: admin, editor, usuario, leitor
-- Status: active, pending, inactive, suspended
+- Status: active, pending, inactive (suspended foi removido)
 - Autenticação via username/password com token JWT
 - Sistema de cores por role: 🟣 admin (roxo), 🔵 editor (azul), 🟢 usuario (verde), ⚪ leitor (cinza)
+- **Mudança importante:** Contas não são mais suspensas, são removidas permanentemente
 
 ### 1.2 Funcionalidades Implementadas
 
@@ -110,25 +115,20 @@ Sistema web desktop para automatizar o processo de reserva de salas do curso de 
 
 ## 2. Grade de Horários
 
-### Períodos Matutinos
-| ID | Período | Horário |
-|----|---------|---------|
-| M.A | Matutino A | 07:30 - 08:20 |
-| M.B | Matutino B | 08:20 - 09:10 |
-| M.C | Matutino C | 09:30 - 10:20 |
-| M.D | Matutino D | 10:20 - 11:10 |
-| M.E | Matutino E | 11:20 - 12:10 |
-| M.F | Matutino F | 12:10 - 13:00 |
+**IMPORTANTE:** O sistema utiliza **blocos combinados** ao invés de períodos individuais para otimizar a experiência de reserva.
 
-### Períodos Vespertinos
-| ID | Período | Horário |
-|----|---------|---------|
-| T.A | Tarde A | 13:30 - 14:20 |
-| T.B | Tarde B | 14:20 - 15:10 |
-| T.C | Tarde C | 15:30 - 16:20 |
-| T.D | Tarde D | 16:20 - 17:10 |
+### Blocos de Horários
+| ID | Bloco | Horário | Período |
+|----|-------|---------|---------|
+| MAB | Manhã AB | 07:30 - 09:10 | Matutino |
+| MCD | Manhã CD | 09:30 - 11:10 | Matutino |
+| MEF | Manhã EF | 11:20 - 13:00 | Matutino |
+| TAB | Tarde AB | 13:30 - 15:10 | Vespertino |
+| TCD | Tarde CD | 15:30 - 17:10 | Vespertino |
 
-**Total:** 10 períodos diários de 50 minutos cada
+**Total:** 5 blocos diários (3 matutinos + 2 vespertinos)  
+**Duração:** Cada bloco tem 1h40 (100 minutos), combinando 2 períodos de 50 minutos  
+**Flexibilidade:** Usuários podem selecionar múltiplos blocos não-sequenciais na mesma reserva
 
 ---
 
@@ -153,10 +153,10 @@ Sistema web desktop para automatizar o processo de reserva de salas do curso de 
 | **RF008** | Exclusão de Usuários | Admin pode remover usuários | - Confirmação antes da exclusão<br>- Impossibilidade de auto-exclusão<br>- Manutenção do histórico de ações | Essencial | 🔄 Backend |
 | **RF009** | Listagem de Usuários | Visualização de todos os usuários | - Lista com informações básicas<br>- Status visível<br>- Ações por usuário<br>- Busca e filtros | Importante | ✅ Implementado |
 | **RF010** | Aprovação de Solicitações | Admin aprova/rejeita solicitações de acesso | - Lista de pendentes<br>- Badge visual de quantidade<br>- Botões de ação rápida<br>- Informação do solicitante | Essencial | ✅ Implementado |
-| **RF011** | Suspensão de Usuários | Admin pode suspender usuários temporariamente | - Mudança de status para suspended<br>- Impossibilidade de suspender a si mesmo<br>- Registro no log<br>- Feedback visual | Essencial | ✅ Implementado |
-| **RF012** | Reativação de Usuários | Admin pode reativar usuários suspensos | - Mudança de status para active<br>- Restauração de acesso<br>- Registro no log<br>- Notificação de sucesso | Essencial | ✅ Implementado |
-| **RF013** | Organização por Status | Interface com tabs por status de usuário | - Tab "Pendentes"<br>- Tab "Ativos"<br>- Tab "Suspensos"<br>- Contador em cada tab<br>- Navegação fluida | Importante | ✅ Implementado |
-| **RF014** | Dashboard de Usuários | Visão geral com métricas | - Card: total de usuários<br>- Card: usuários ativos<br>- Card: usuários pendentes<br>- Card: usuários suspensos<br>- Ícones representativos | Importante | ✅ Implementado |
+| **RF011** | Remoção de Usuários | Admin pode remover usuários permanentemente | - Exclusão do registro do usuário<br>- Impossibilidade de remover a si mesmo<br>- Registro no log com contexto<br>- Feedback visual | Essencial | ✅ Implementado |
+| **RF012** | Reativação de Usuários | Reativação não suportada | - Não há reativação de contas removidas<br>- Mensagem clara ao tentar reativar | Importante | ❌ Não aplicável |
+| **RF013** | Organização por Status | Interface com tabs por status de usuário | - Tab "Pendentes"<br>- Tab "Ativos"<br>- Contador em cada tab<br>- Navegação fluida | Importante | ✅ Implementado |
+| **RF014** | Dashboard de Usuários | Visão geral com métricas | - Card: total de usuários<br>- Card: usuários ativos<br>- Card: usuários pendentes<br>- Card: revisões abertas<br>- Ícones representativos | Importante | ✅ Implementado |
 | **RF015** | Informações Detalhadas | Visualização completa de dados do usuário | - Nome completo e username<br>- Email institucional<br>- Role/função<br>- Departamento<br>- Data de criação<br>- Último acesso<br>- Status atual | Importante | ✅ Implementado |
 | **RF016** | Menu de Ações Contextual | Dropdown com ações por usuário | - Ícone três pontos (⋮)<br>- Ações conforme status<br>- Cores diferenciadas<br>- Proteção contra auto-ação | Importante | ✅ Implementado |
 | **RF017** | Badges de Perfil | Identificação visual do role | - Admin: roxo<br>- Coordenador: azul<br>- Professor: verde<br>- Funcionário: cinza<br>- Editor: laranja<br>- Viewer: cinza claro | Desejável | ✅ Implementado |
@@ -185,23 +185,23 @@ Sistema web desktop para automatizar o processo de reserva de salas do curso de 
 | **RF030** | Editar Reserva | Permitir modificação de reservas existentes | - Alteração de data e horário<br>- Modificação de serviço<br>- Atualização de responsável<br>- Validação de conflitos<br>- Manutenção do histórico | Essencial | ✅ Implementado |
 | **RF031** | Cancelar Reserva | Permitir cancelamento de reservas | - Confirmação prévia<br>- Liberação imediata<br>- Registro no log<br>- Notificação visual<br>- Apenas usuários autorizados | Essencial | ✅ Implementado |
 | **RF032** | Validação de Conflitos | Prevenir reservas conflitantes | - Verificação em tempo real<br>- Bloqueio de horários ocupados<br>- Checkboxes desabilitados<br>- Mensagens claras | Essencial | ✅ Implementado |
-| **RF033** | Períodos Fracionados | Sistema suporta 10 períodos específicos | - M.A até M.F (manhã)<br>- T.A até T.D (tarde)<br>- Seleção múltipla<br>- Validação de sequência<br>- Interface intuitiva | Essencial | ✅ Implementado |
+| **RF033** | Blocos Combinados | Sistema suporta 5 blocos horários combinados | - MAB (07:30-09:10)<br>- MCD (09:30-11:10)<br>- MEF (11:20-13:00)<br>- TAB (13:30-15:10)<br>- TCD (15:30-17:10)<br>- Seleção múltipla<br>- Interface com checkboxes<br>- Validação de sequência | Essencial | ✅ Implementado |
 | **RF034** | Calendário Integrado | Interface de calendário para seleção de data | - Visualização mensal<br>- Locale pt-BR<br>- Navegação entre meses<br>- Destaque da data selecionada<br>- Desabilitar datas passadas (opcional) | Essencial | ✅ Implementado |
 | **RF035** | Listagem de Reservas | Visualização de todas as reservas | - Próximas reservas<br>- Histórico<br>- Filtros por data, sala, status<br>- Ordenação<br>- Ações rápidas (editar, cancelar) | Importante | ✅ Implementado |
 | **RF036** | Modal de Reserva em Duas Colunas | Interface otimizada para criação/edição | - Coluna esquerda: formulário<br>- Coluna direita: calendário e horários<br>- Layout fixo de duas colunas<br>- Largura máxima 7xl<br>- Scroll interno | Essencial | ✅ Implementado |
 | **RF037** | Pré-preenchimento Inteligente | Formulário pré-preenchido com dados | - Nova: dados padrão da sala<br>- Edição: dados da reserva<br>- Responsável padrão<br>- Tipo de atendimento<br>- Data atual ou da reserva | Essencial | ✅ Implementado |
-| **RF038** | Seleção Múltipla com Validação | Checkboxes para períodos com validação | - Checkboxes para 10 períodos<br>- Desabilitar ocupados<br>- Indicação visual clara<br>- Seleção não-sequencial<br>- Labels com horário completo | Essencial | ✅ Implementado |
+| **RF038** | Seleção Múltipla com Validação | Checkboxes para blocos com validação | - Checkboxes para 5 blocos<br>- Desabilitar ocupados<br>- Indicação visual clara<br>- Seleção não-sequencial<br>- Labels com horário completo<br>- useMemo para otimização | Essencial | ✅ Implementado |
 | **RF039** | Exclusão da Própria Reserva | Ao editar, não considerar como conflito | - Filtrar reserva sendo editada<br>- Permitir alterar horários<br>- Validar apenas outras reservas<br>- Feedback correto | Essencial | ✅ Implementado |
 | **RF040** | Indicador de Modo Edição | Alert visual no topo do modal | - Fundo azul claro<br>- Texto explicativo<br>- Apenas se editingBooking !== null | Desejável | ✅ Implementado |
-| **RF041** | Resumo de Horários | Seção mostrando períodos selecionados | - Formatação em texto (M.A, M.B, T.A)<br>- Atualização em tempo real<br>- Horário inicial e final | Importante | ✅ Implementado |
+| **RF041** | Resumo de Horários | Seção mostrando blocos selecionados | - Formatação em texto (MAB, MCD, TAB)<br>- Atualização em tempo real<br>- Horário inicial e final calculado<br>- Exibição de faixa horária completa | Importante | ✅ Implementado |
 | **RF042** | Validação de Capacidade | Input numérico com validação de limite | - Min: 1 participante<br>- Max: capacidade da sala<br>- Validação no cliente<br>- Mensagem de erro se exceder | Importante | ✅ Implementado |
 | **RF043** | Campo de Observações | Textarea opcional para informações | - Placeholder apropriado<br>- Campo opcional<br>- 3 linhas de altura<br>- Armazenado com reserva | Desejável | ✅ Implementado |
 | **RF044** | Registro de Criador | Sistema registra quem criou a reserva | - Campo createdBy automático<br>- Usar nome do usuário logado<br>- Exibir na listagem<br>- Não editável | Importante | ✅ Implementado |
 | **RF045** | Separação Temporal | Reservas divididas em próximas e histórico | - Próximas: data >= hoje e status != cancelada<br>- Histórico: data < hoje ou cancelada<br>- Títulos claros<br>- Opacidade reduzida em histórico | Essencial | ✅ Implementado |
-| **RF046** | Card de Reserva Detalhado | Informações completas em cada card | - Número e nome da sala<br>- Data formatada<br>- Horário inicial e final<br>- Participantes<br>- Status (badge)<br>- Responsável<br>- Tipo de atendimento<br>- Criador<br>- Períodos (badges)<br>- Observações | Essencial | ✅ Implementado |
+| **RF046** | Card de Reserva Detalhado | Informações completas em cada card | - Número e nome da sala<br>- Data formatada<br>- Horário inicial e final<br>- Participantes<br>- Status (badge)<br>- Responsável<br>- Tipo de atendimento<br>- Criador<br>- Blocos (badges: MAB, MCD, etc)<br>- Observações | Essencial | ✅ Implementado |
 | **RF047** | Menu de Ações em Reservas | Dropdown com ações contextuais | - Ver Detalhes (opcional)<br>- Editar (se confirmada)<br>- Cancelar (sempre)<br>- Cores diferenciadas<br>- Apenas para usuários autorizados | Essencial | ✅ Implementado |
 | **RF048** | Formatação de Data | Data em formato extenso e legível | - Formato: "dia da semana, dia de mês de ano"<br>- Exemplo: "segunda-feira, 15 de janeiro de 2025"<br>- Locale pt-BR | Desejável | ✅ Implementado |
-| **RF049** | Cálculo de Faixa Horária | Sistema calcula horário inicial e final | - Ordenar períodos<br>- Pegar start do primeiro<br>- Pegar end do último<br>- Formato: "HH:MM - HH:MM" | Importante | ✅ Implementado |
+| **RF049** | Cálculo de Faixa Horária | Sistema calcula horário inicial e final dos blocos | - Ordenar blocos selecionados<br>- Pegar start do primeiro bloco<br>- Pegar end do último bloco<br>- Formato: "HH:MM - HH:MM"<br>- Exemplo: "07:30 - 13:00" (MAB + MCD + MEF) | Importante | ✅ Implementado |
 | **RF050** | Estado Vazio | Mensagem quando não há reservas | - Ícone grande de calendário<br>- Título descritivo<br>- Texto explicativo<br>- Centralizado | Desejável | ✅ Implementado |
 | **RF051** | Impressão de Relatório | Exportar reservas para impressão | - Função window.print()<br>- Layout otimizado para impressão<br>- Registro no log | Importante | ✅ Implementado |
 
@@ -232,17 +232,29 @@ Sistema web desktop para automatizar o processo de reserva de salas do curso de 
 | **RF067** | Notificações de Erro | Feedback visual para erros | - Mensagens claras<br>- Orientações para correção<br>- Diferenciação visual<br>- Toast vermelho | Importante | ✅ Implementado |
 | **RF068** | Busca Global | Campo de busca contextual | - SearchInputCard componentizado<br>- Busca em tempo real<br>- Case-insensitive<br>- Placeholder apropriado | Importante | ✅ Implementado |
 
-### 3.7 Integrações e API
+### 3.7 Solicitações de Revisão
 
 | ID | Requisito | Descrição | Critérios de Aceitação | Prioridade | Status |
 |---|---|---|---|---|---|
-| **RF069** | API REST - Autenticação | Endpoints de autenticação | - POST /api/auth/login<br>- GET /api/auth/users<br>- Retorno de token JWT<br>- Tratamento de erros | Essencial | ✅ Implementado |
-| **RF070** | API REST - Salas | Endpoints de salas | - GET /api/nami/rooms<br>- GET /api/nami/rooms/:roomId<br>- GET /api/nami/monitorings<br>- Formato JSON | Essencial | ✅ Implementado |
-| **RF071** | API REST - Reservas | Endpoints de reservas | - GET /api/nami/bookings<br>- GET /api/nami/rooms/:roomId/bookings<br>- POST /api/nami/bookings (a implementar)<br>- PUT /api/nami/bookings/:id (a implementar)<br>- DELETE /api/nami/bookings/:id (a implementar) | Essencial | 🔄 Parcial |
-| **RF072** | API REST - Time Slots | Endpoint de períodos | - GET /api/nami/time-slots<br>- Retorno de todos os 10 períodos<br>- Formato padronizado | Essencial | ✅ Implementado |
-| **RF073** | Tratamento de Erros API | Cliente HTTP com tratamento robusto | - Classe ApiError customizada<br>- Status HTTP apropriados<br>- Mensagens descritivas<br>- Fallback para dados locais | Essencial | ✅ Implementado |
-| **RF074** | CORS Configurável | Configuração de origens permitidas | - Ambiente development: localhost<br>- Ambiente production: origem específica<br>- Credentials: true<br>- Validação de origem | Essencial | ✅ Implementado |
-| **RF075** | Sincronização de Dados | Carregamento inicial de dados | - Promise.all para requisições paralelas<br>- Loading state<br>- Erro state<br>- Alert visual de sincronização | Importante | ✅ Implementado |
+| **RF069** | Sistema de Revisão de Conflitos | Usuários podem solicitar revisão de horários ocupados | - Usuário "usuario" pode criar solicitação<br>- Modal com justificativa obrigatória<br>- Admin/editor visualizam solicitações<br>- Sistema de aprovação/rejeição<br>- Status: open, approved, rejected | Importante | ✅ Implementado |
+| **RF070** | Criar Solicitação de Revisão | Formulário de solicitação de revisão | - Dados da reserva desejada<br>- Campo de justificativa (textarea)<br>- Resumo da solicitação<br>- Validação de campos<br>- Apenas para conflitos | Importante | ✅ Implementado |
+| **RF071** | Listar Solicitações | Admin/editor visualizam todas as solicitações | - Lista completa de revisões<br>- Filtro por status (open, approved, rejected)<br>- Exibição de justificativa<br>- Contador de pendentes<br>- Organização cronológica | Importante | ✅ Implementado |
+| **RF072** | Aprovar Solicitação | Admin pode aprovar solicitações | - Botão de aprovação<br>- Criação automática de reserva<br>- Atualização de status<br>- Registro no log<br>- Notificação ao solicitante | Importante | ✅ Implementado |
+| **RF073** | Rejeitar Solicitação | Admin pode rejeitar solicitações | - Botão de rejeição<br>- Atualização de status<br>- Registro no log<br>- Feedback ao solicitante | Importante | ✅ Implementado |
+| **RF074** | Dashboard de Revisões | Card com métricas de revisões | - Total de revisões abertas<br>- Exibição no UserManagement<br>- Badge visual com contador<br>- Ícone ClipboardList | Desejável | ✅ Implementado |
+
+### 3.8 Integrações e API
+
+| ID | Requisito | Descrição | Critérios de Aceitação | Prioridade | Status |
+|---|---|---|---|---|---|
+| **RF075** | API REST - Autenticação | Endpoints de autenticação | - POST /api/auth/login<br>- GET /api/auth/users<br>- Retorno de token JWT<br>- Tratamento de erros | Essencial | ✅ Implementado |
+| **RF076** | API REST - Salas | Endpoints de salas | - GET /api/nami/rooms<br>- GET /api/nami/rooms/:roomId<br>- GET /api/nami/monitorings<br>- Formato JSON | Essencial | ✅ Implementado |
+| **RF077** | API REST - Reservas | Endpoints de reservas (CRUD completo) | - GET /api/nami/bookings (com paginação)<br>- GET /api/nami/rooms/:roomId/bookings<br>- POST /api/nami/bookings<br>- PUT /api/nami/bookings/:id<br>- DELETE /api/nami/bookings/:id<br>- Validação com Zod schemas<br>- Formato JSON | Essencial | ✅ Implementado |
+| **RF078** | API REST - Time Slots | Endpoint de blocos horários | - GET /api/nami/time-slots<br>- Retorno de todos os 5 blocos<br>- Formato padronizado<br>- IDs: MAB, MCD, MEF, TAB, TCD | Essencial | ✅ Implementado |
+| **RF079** | Tratamento de Erros API | Cliente HTTP com tratamento robusto | - Classe ApiError customizada<br>- Status HTTP apropriados<br>- Mensagens descritivas<br>- Fallback para dados locais | Essencial | ✅ Implementado |
+| **RF080** | CORS Configurável | Configuração de origens permitidas | - Ambiente development: localhost<br>- Ambiente production: origem específica<br>- Credentials: true<br>- Validação de origem | Essencial | ✅ Implementado |
+| **RF081** | Sincronização de Dados | Carregamento inicial de dados | - Promise.all para requisições paralelas<br>- Loading state<br>- Erro state<br>- Alert visual de sincronização | Importante | ✅ Implementado |
+| **RF082** | API REST - Revisões | Endpoints de solicitações de revisão | - GET /api/nami/revision-requests<br>- POST /api/nami/revision-requests<br>- POST /api/nami/revision-requests/:id/approve<br>- POST /api/nami/revision-requests/:id/reject<br>- Autorização por role | Importante | ✅ Implementado |
 
 ---
 
@@ -367,10 +379,11 @@ Sistema web desktop para automatizar o processo de reserva de salas do curso de 
 - Validação em tempo real ao selecionar data
 
 ### RN003 - Períodos de Reserva
-- Reservas devem seguir a grade de 10 períodos pré-definidos
-- Não é possível criar períodos customizados
+- Reservas devem seguir a grade de 5 blocos pré-definidos
+- Não é possível criar blocos customizados
 - Seleção múltipla e não-sequencial permitida
-- Períodos: M.A, M.B, M.C, M.D, M.E, M.F, T.A, T.B, T.C, T.D
+- Blocos: MAB, MCD, MEF, TAB, TCD
+- Cada bloco combina 2 períodos de 50 minutos (total: 100 minutos por bloco)
 
 ### RN004 - Capacidade de Sala
 - Número de participantes deve respeitar a capacidade da sala
@@ -392,13 +405,16 @@ Sistema web desktop para automatizar o processo de reserva de salas do curso de 
 ### RN007 - Status de Usuário
 - **Active:** Usuário com acesso ao sistema
 - **Pending:** Aguardando aprovação do administrador
-- **Suspended:** Temporariamente bloqueado, pode ser reativado
-- **Inactive:** Usuário desativado (não implementado ainda)
+- **Inactive:** Usuário desativado (sem acesso ao sistema)
+- **Nota:** Status "suspended" foi removido - contas problemáticas são deletadas permanentemente
 
-### RN008 - Proteção de Auto-ação
-- Usuário não pode suspender a si mesmo
+### RN008 - Proteção de Auto-ação e Remoção Permanente
 - Usuário não pode remover a si mesmo
-- Admin principal não pode ser removido
+- Admin principal não pode ser removido por outros usuários
+- **Contas removidas são excluídas permanentemente do sistema**
+- **Não há mais suspensão temporária - apenas remoção definitiva**
+- Endpoint `/suspend` agora executa deleção permanente internamente
+- Endpoint `/reactivate` retorna erro 400 (reativação não suportada)
 
 ### RN009 - Auditoria
 - Todas as ações críticas devem ser registradas no log
@@ -407,10 +423,28 @@ Sistema web desktop para automatizar o processo de reserva de salas do curso de 
 - Ordenação cronológica reversa (mais recente primeiro)
 
 ### RN010 - Organização de Salas
-- 17 salas no total (15 monitoradas + 2 independentes)
-- 3 monitoramentos principais
-- Salas independentes (não vinculadas a monitoramento)
-- Cada monitoramento tem responsável e tipo de atendimento padrão
+- 18 salas no total:
+  - 15 salas numéricas vinculadas a monitoramentos (Salas 1-15)
+  - 3 escritórios independentes (Salas 101, 102, 103)
+- 3 monitoramentos principais (cada um com 5 salas + 1 escritório)
+- Escritórios são marcados como `isIndependent: true`
+- Cada monitoramento permite todos os blocos horários (MAB a TCD)
+- Todos os monitoramentos são reserváveis (`reservavel: true`)
+
+### RN011 - Sistema de Solicitações de Revisão
+- **Propósito:** Permitir que usuários comuns solicitem horários já ocupados
+- **Fluxo:**
+  1. Usuário "usuario" tenta reservar horário ocupado
+  2. Sistema oferece opção de "Solicitar Revisão"
+  3. Usuário preenche justificativa obrigatória
+  4. Admin visualiza solicitação no dashboard
+  5. Admin pode aprovar (cria reserva) ou rejeitar
+- **Validações:**
+  - Justificativa é obrigatória (mínimo de caracteres)
+  - Apenas admin pode aprovar/rejeitar
+  - Logs são registrados para todas as ações
+  - Status possíveis: open, approved, rejected
+- **Integração:** Aparece no UserManagement (card de revisões abertas)
 
 ---
 

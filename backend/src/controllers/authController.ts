@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
+import { activityLogService } from "../services/activityLogService.js";
 import { authService } from "../services/authService.js";
 
 const loginSchema = z.object({
@@ -33,5 +34,19 @@ export const authController = {
     } catch (error) {
       return next(error);
     }
+  },
+  logout: (request: Request, response: Response) => {
+    const actorId = request.user?.id ?? "";
+    if (actorId) {
+      activityLogService.register(
+        "Logout",
+        `Usuário desconectado: ${request.user?.name ?? actorId}`,
+        actorId,
+        actorId,
+        request.ip,
+        String(request.headers["user-agent"] ?? ""),
+      );
+    }
+    return response.status(204).send();
   },
 };
