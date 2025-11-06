@@ -40,7 +40,7 @@ Configure `backend/.env` (copie de `.env.example` se necessário) para ajustar p
 - Sala 1-5: Monitoramento 1 (capacidade 8 pessoas)
 - Sala 6-10: Monitoramento 2 (capacidade 10 pessoas)
 - Sala 11-15: Monitoramento 3 (capacidade 12 pessoas)
-- Sala 101-103: Escritórios independentes (capacidade 2 pessoas)
+- Sala 101-103: Escritórios de monitoramento (capacidade 2 pessoas)
 - Grade horária com 5 blocos combinados de 100 minutos cada (MAB, MCD, MEF, TAB, TCD)
 
 As reservas e usuários são mantidos em memória durante a execução. Reiniciar o servidor limpa os dados.
