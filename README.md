@@ -306,8 +306,6 @@ sistema-gestao/
 
 **Sistema de Gestão de Reservas de Salas - NAMI UNIFOR**
 
-Desenvolvido por [shinlosa](https://github.com/shinlosa)
-
 © 2025 NAMI - Núcleo de Atenção Médica Integrada | Universidade de Fortaleza
 
 </div>
