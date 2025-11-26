@@ -7,7 +7,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 const authRouter = Router();
 
 authRouter.post("/login", asyncHandler(authController.login));
-authRouter.post("/logout", authenticate, authController.logout);
-authRouter.get("/users", authenticate, requireRole(["admin"]), userController.list);
+authRouter.post("/logout", authenticate, asyncHandler(authController.logout));
+authRouter.get("/users", authenticate, requireRole(["admin"]), asyncHandler(userController.list));
 
 export { authRouter };

@@ -5,12 +5,12 @@ import { User } from "../types/nami.js";
 import { createUserSchema, updateUserSchema } from "../schemas/userSchemas.js";
 
 export const userController = {
-  list: (request: Request, response: Response) => {
+  list: async (request: Request, response: Response) => {
     // Simple pagination (in-memory). Clients may pass ?page and ?perPage
     const page = Math.max(1, Number(request.query.page ?? 1));
     const perPage = Math.max(1, Math.min(100, Number(request.query.perPage ?? 20)));
 
-    const all = userService.list();
+    const all = await userService.list();
     const total = all.length;
     const totalPages = Math.max(1, Math.ceil(total / perPage));
     const offset = (page - 1) * perPage;
@@ -33,7 +33,7 @@ export const userController = {
     try {
       const actorId = request.user?.id ?? "";
       const user = await userService.create(parseResult.data, actorId);
-      activityLogService.register(
+      await activityLogService.register(
         "Gerenciar Usuário",
         `Usuário criado: ${user.name}`,
         actorId,
@@ -62,7 +62,7 @@ export const userController = {
       const userId = request.params.userId;
       const actorId = request.user?.id ?? "";
       const user = await userService.update(userId, parseResult.data);
-      activityLogService.register(
+      await activityLogService.register(
         "Gerenciar Usuário",
         `Usuário atualizado: ${user.name}`,
         actorId,
@@ -76,12 +76,12 @@ export const userController = {
     }
   },
 
-  delete: (request: Request, response: Response, next: NextFunction) => {
+  delete: async (request: Request, response: Response, next: NextFunction) => {
     try {
       const userId = request.params.userId;
       const actorId = request.user?.id ?? "";
-      userService.delete(userId, actorId);
-      activityLogService.register(
+      await userService.delete(userId, actorId);
+      await activityLogService.register(
         "Gerenciar Usuário",
         `Usuário removido: ${userId}`,
         actorId,
@@ -95,7 +95,7 @@ export const userController = {
     }
   },
 
-  changeRole: (request: Request, response: Response, next: NextFunction) => {
+  changeRole: async (request: Request, response: Response, next: NextFunction) => {
     try {
       const userId = request.params.userId;
       const actorId = request.user?.id ?? "";
@@ -110,8 +110,8 @@ export const userController = {
         return response.status(400).json({ message: "Role inválido" });
       }
 
-      const user = userService.changeRole(userId, role as User["role"], actorId);
-      activityLogService.register(
+      const user = await userService.changeRole(userId, role as User["role"], actorId);
+      await activityLogService.register(
         "Gerenciar Usuário",
         `Função alterada: ${user.name} => ${user.role}`,
         actorId,
@@ -125,12 +125,12 @@ export const userController = {
     }
   },
 
-  approve: (request: Request, response: Response, next: NextFunction) => {
+  approve: async (request: Request, response: Response, next: NextFunction) => {
     try {
       const userId = request.params.userId;
       const actorId = request.user?.id ?? "";
-      const user = userService.approve(userId, actorId);
-      activityLogService.register(
+      const user = await userService.approve(userId, actorId);
+      await activityLogService.register(
         "Gerenciar Usuário",
         `Usuário aprovado: ${user.name}`,
         actorId,
@@ -144,12 +144,12 @@ export const userController = {
     }
   },
 
-  reject: (request: Request, response: Response, next: NextFunction) => {
+  reject: async (request: Request, response: Response, next: NextFunction) => {
     try {
       const userId = request.params.userId;
       const actorId = request.user?.id ?? "";
-      userService.reject(userId, actorId);
-      activityLogService.register(
+      await userService.reject(userId, actorId);
+      await activityLogService.register(
         "Gerenciar Usuário",
         `Solicitação rejeitada: ${userId}`,
         actorId,
@@ -163,13 +163,13 @@ export const userController = {
     }
   },
 
-  suspend: (request: Request, response: Response, next: NextFunction) => {
+  suspend: async (request: Request, response: Response, next: NextFunction) => {
     try {
       const userId = request.params.userId;
       const actorId = request.user?.id ?? "";
       // Suspend now deletes the user permanently
-      userService.suspend(userId, actorId);
-      activityLogService.register(
+      await userService.suspend(userId, actorId);
+      await activityLogService.register(
         "Gerenciar Usuário",
         `Usuário removido via ação 'suspend': ${userId}`,
         actorId,

@@ -7,14 +7,14 @@ const userRouter = Router();
 
 userRouter.use(authenticate, requireRole(["admin"]));
 
-userRouter.get("/", userController.list);
+userRouter.get("/", asyncHandler(userController.list));
 userRouter.post("/", asyncHandler(userController.create));
 userRouter.put("/:userId", asyncHandler(userController.update));
-userRouter.delete("/:userId", userController.delete);
-userRouter.patch("/:userId/role", userController.changeRole);
-userRouter.post("/:userId/approve", userController.approve);
-userRouter.post("/:userId/reject", userController.reject);
-userRouter.post("/:userId/suspend", userController.suspend);
+userRouter.delete("/:userId", asyncHandler(userController.delete));
+userRouter.patch("/:userId/role", asyncHandler(userController.changeRole));
+userRouter.post("/:userId/approve", asyncHandler(userController.approve));
+userRouter.post("/:userId/reject", asyncHandler(userController.reject));
+userRouter.post("/:userId/suspend", asyncHandler(userController.suspend));
 userRouter.post("/:userId/reactivate", userController.reactivate);
 
 export { userRouter };

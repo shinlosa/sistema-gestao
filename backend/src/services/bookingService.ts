@@ -39,8 +39,8 @@ const ensureUniqueTimeSlots = (timeSlots: string[]): string[] => {
   return unique;
 };
 
-const ensureTimeSlotsExist = (timeSlots: string[]) => {
-  const availableSlots = timeSlotRepository.list();
+const ensureTimeSlotsExist = async (timeSlots: string[]) => {
+  const availableSlots = await timeSlotRepository.list();
   const availableIds = new Set(availableSlots.map((slot) => slot.id));
 
   const invalid = timeSlots.filter((slot) => !availableIds.has(slot));
@@ -49,8 +49,8 @@ const ensureTimeSlotsExist = (timeSlots: string[]) => {
   }
 };
 
-const ensureTimeSlotsAllowedForRoom = (roomId: string, timeSlots: string[]) => {
-  const room = roomRepository.findById(roomId);
+const ensureTimeSlotsAllowedForRoom = async (roomId: string, timeSlots: string[]) => {
+  const room = await roomRepository.findById(roomId);
   if (!room) {
     throw ApiError.notFound("Sala não encontrada");
   }
@@ -59,7 +59,7 @@ const ensureTimeSlotsAllowedForRoom = (roomId: string, timeSlots: string[]) => {
     return;
   }
 
-  const monitoring = monitoringRepository.findById(room.monitoringId);
+  const monitoring = await monitoringRepository.findById(room.monitoringId);
   if (!monitoring) {
     return;
   }
@@ -72,14 +72,14 @@ const ensureTimeSlotsAllowedForRoom = (roomId: string, timeSlots: string[]) => {
   }
 };
 
-const ensureNoBookingConflicts = (params: {
+const ensureNoBookingConflicts = async (params: {
   roomId: string;
   date: string;
   timeSlots: string[];
   ignoreBookingId?: string;
 }) => {
   const { roomId, date, timeSlots, ignoreBookingId } = params;
-  const bookings = bookingRepository.listByRoomAndDate(roomId, date);
+  const bookings = await bookingRepository.listByRoomAndDate(roomId, date);
   const requested = new Set(timeSlots);
 
   const conflict = bookings.find((booking) => {
@@ -101,8 +101,8 @@ const ensureNoBookingConflicts = (params: {
   }
 };
 
-const buildBookingRecord = (input: BookingInput & { date: string }, actor: Actor, source?: NAMIBooking): NAMIBooking => {
-  const room = roomRepository.findById(input.roomId);
+const buildBookingRecord = async (input: BookingInput & { date: string }, actor: Actor, source?: NAMIBooking): Promise<NAMIBooking> => {
+  const room = await roomRepository.findById(input.roomId);
   if (!room) {
     throw ApiError.notFound("Sala não encontrada");
   }
@@ -126,51 +126,51 @@ const buildBookingRecord = (input: BookingInput & { date: string }, actor: Actor
 };
 
 export const bookingService = {
-  createBooking(rawInput: BookingInput, actor: Actor): NAMIBooking {
+  async createBooking(rawInput: BookingInput, actor: Actor): Promise<NAMIBooking> {
     if (!actor?.id) {
       throw ApiError.unauthorized();
     }
 
     const uniqueTimeSlots = ensureUniqueTimeSlots(rawInput.timeSlots);
-    ensureTimeSlotsExist(uniqueTimeSlots);
-    ensureTimeSlotsAllowedForRoom(rawInput.roomId, uniqueTimeSlots);
+    await ensureTimeSlotsExist(uniqueTimeSlots);
+    await ensureTimeSlotsAllowedForRoom(rawInput.roomId, uniqueTimeSlots);
 
     const normalizedDate = normalizeDate(rawInput.date);
-    ensureNoBookingConflicts({ roomId: rawInput.roomId, date: normalizedDate, timeSlots: uniqueTimeSlots });
+    await ensureNoBookingConflicts({ roomId: rawInput.roomId, date: normalizedDate, timeSlots: uniqueTimeSlots });
 
-    const bookingRecord = buildBookingRecord(
+    const bookingRecord = await buildBookingRecord(
       { ...rawInput, timeSlots: uniqueTimeSlots, date: normalizedDate },
       actor,
     );
 
-    const saved = bookingRepository.create(bookingRecord);
-    activityLogService.registerBookingCreate(actor.id, saved);
+    const saved = await bookingRepository.create(bookingRecord);
+    await activityLogService.registerBookingCreate(actor.id, saved);
     return saved;
   },
 
-  updateBooking(bookingId: string, rawInput: BookingInput, actor: Actor): NAMIBooking {
+  async updateBooking(bookingId: string, rawInput: BookingInput, actor: Actor): Promise<NAMIBooking> {
     if (!actor?.id) {
       throw ApiError.unauthorized();
     }
 
-    const existing = bookingRepository.findById(bookingId);
+    const existing = await bookingRepository.findById(bookingId);
     if (!existing) {
       throw ApiError.notFound("Reserva não encontrada");
     }
 
     const uniqueTimeSlots = ensureUniqueTimeSlots(rawInput.timeSlots);
-    ensureTimeSlotsExist(uniqueTimeSlots);
-    ensureTimeSlotsAllowedForRoom(rawInput.roomId, uniqueTimeSlots);
+    await ensureTimeSlotsExist(uniqueTimeSlots);
+    await ensureTimeSlotsAllowedForRoom(rawInput.roomId, uniqueTimeSlots);
 
     const normalizedDate = normalizeDate(rawInput.date);
-    ensureNoBookingConflicts({
+    await ensureNoBookingConflicts({
       roomId: rawInput.roomId,
       date: normalizedDate,
       timeSlots: uniqueTimeSlots,
       ignoreBookingId: bookingId,
     });
 
-    const updatedRecord = buildBookingRecord(
+    const updatedRecord = await buildBookingRecord(
       { ...rawInput, timeSlots: uniqueTimeSlots, date: normalizedDate },
       actor,
       existing,
@@ -179,17 +179,17 @@ export const bookingService = {
     updatedRecord.createdBy = existing.createdBy;
     updatedRecord.createdAt = existing.createdAt;
 
-    const saved = bookingRepository.update(updatedRecord);
-    activityLogService.registerBookingUpdate(actor.id, saved);
+    const saved = await bookingRepository.update(updatedRecord);
+    await activityLogService.registerBookingUpdate(actor.id, saved);
     return saved;
   },
 
-  cancelBooking(bookingId: string, actor: Actor): void {
+  async cancelBooking(bookingId: string, actor: Actor): Promise<void> {
     if (!actor?.id) {
       throw ApiError.unauthorized();
     }
 
-    const existing = bookingRepository.findById(bookingId);
+    const existing = await bookingRepository.findById(bookingId);
     if (!existing) {
       throw ApiError.notFound("Reserva não encontrada");
     }
@@ -204,7 +204,7 @@ export const bookingService = {
       notes: existing.notes,
     };
 
-    const saved = bookingRepository.update(cancelled);
-    activityLogService.registerBookingCancellation(actor.id, saved);
+    const saved = await bookingRepository.update(cancelled);
+    await activityLogService.registerBookingCancellation(actor.id, saved);
   },
 };

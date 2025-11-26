@@ -26,29 +26,30 @@ export type UpdateUserInput = {
 
 const sanitizeEmail = (email: string): string => email.trim().toLowerCase();
 
-const ensureUsernameUnique = (username: string) => {
-  const existing = userRepository.findByUsername(username);
+const ensureUsernameUnique = async (username: string) => {
+  const existing = await userRepository.findByUsername(username);
   if (existing) {
     throw ApiError.conflict("Nome de usuário já está em uso");
   }
 };
 
-const ensureEmailUnique = (email: string, ignoreUserId?: string) => {
-  const existing = userRepository.list().find((user) => user.email.toLowerCase() === email && user.id !== ignoreUserId);
-  if (existing) {
+const ensureEmailUnique = async (email: string, ignoreUserId?: string) => {
+  const existing = await userRepository.findByEmail(email);
+  if (existing && existing.id !== ignoreUserId) {
     throw ApiError.conflict("Email já está em uso");
   }
 };
 
 export const userService = {
-  list() {
-    return userRepository.list().map(({ passwordHash: _password, ...rest }) => rest);
+  async list() {
+    const users = await userRepository.list();
+    return users.map(({ passwordHash: _password, ...rest }) => rest);
   },
 
   async create(input: CreateUserInput, actorId: string): Promise<Omit<User, "passwordHash">> {
-    ensureUsernameUnique(input.username);
+    await ensureUsernameUnique(input.username);
     const email = sanitizeEmail(input.email);
-    ensureEmailUnique(email);
+    await ensureEmailUnique(email);
 
     const passwordHash = await passwordUtils.hash(input.password);
 
@@ -69,20 +70,20 @@ export const userService = {
       approvedAt: input.status === "active" ? now : undefined,
     };
 
-    const created = userRepository.create(user);
+    const created = await userRepository.create(user);
     const { passwordHash: _password, ...rest } = created;
     return rest;
   },
 
   async update(userId: string, input: UpdateUserInput): Promise<Omit<User, "passwordHash">> {
-    const existing = userRepository.findById(userId);
+    const existing = await userRepository.findById(userId);
     if (!existing) {
       throw ApiError.notFound("Usuário não encontrado");
     }
 
     const email = input.email ? sanitizeEmail(input.email) : existing.email;
     if (input.email) {
-      ensureEmailUnique(email, userId);
+      await ensureEmailUnique(email, userId);
     }
 
     let passwordHash = existing.passwordHash;
@@ -100,13 +101,13 @@ export const userService = {
       passwordHash,
     };
 
-    const saved = userRepository.update(updated);
+    const saved = await userRepository.update(updated);
     const { passwordHash: _password, ...rest } = saved;
     return rest;
   },
 
-  changeRole(userId: string, newRole: User["role"], _actorId: string): Omit<User, "passwordHash"> {
-    const existing = userRepository.findById(userId);
+  async changeRole(userId: string, newRole: User["role"], _actorId: string): Promise<Omit<User, "passwordHash">> {
+    const existing = await userRepository.findById(userId);
     if (!existing) {
       throw ApiError.notFound("Usuário não encontrado");
     }
@@ -116,13 +117,13 @@ export const userService = {
       role: newRole,
     };
 
-    const saved = userRepository.update(updated);
+    const saved = await userRepository.update(updated);
     const { passwordHash: _password, ...rest } = saved;
     return rest;
   },
 
-  approve(userId: string, actorId: string): Omit<User, "passwordHash"> {
-    const existing = userRepository.findById(userId);
+  async approve(userId: string, actorId: string): Promise<Omit<User, "passwordHash">> {
+    const existing = await userRepository.findById(userId);
     if (!existing) {
       throw ApiError.notFound("Usuário não encontrado");
     }
@@ -135,43 +136,43 @@ export const userService = {
       approvedAt: now,
     };
 
-    const saved = userRepository.update(updated);
+    const saved = await userRepository.update(updated);
     const { passwordHash: _password, ...rest } = saved;
     return rest;
   },
 
-  reject(userId: string, _actorId: string): void {
-    const existing = userRepository.findById(userId);
+  async reject(userId: string, _actorId: string): Promise<void> {
+    const existing = await userRepository.findById(userId);
     if (!existing) {
       throw ApiError.notFound("Usuário não encontrado");
     }
 
     // For a reject, remove the requested user record
-    userRepository.delete(userId);
+    await userRepository.delete(userId);
   },
 
-  suspend(userId: string, actorId: string): void {
+  async suspend(userId: string, actorId: string): Promise<void> {
     // When requested to "suspend" a user, the system now deletes the account
     // instead of marking it suspended. Reuse the existing delete logic which
     // enforces self-deletion protections and not-found checks.
-    userService.delete(userId, actorId);
+    await userService.delete(userId, actorId);
   },
 
-  reactivate(_userId: string, _actorId: string): Omit<User, "passwordHash"> {
+  reactivate(_userId: string, _actorId: string): Promise<Omit<User, "passwordHash">> {
     // Re-activation is not supported: accounts are deleted permanently.
     throw ApiError.badRequest("Reativação não suportada: contas são excluídas permanentemente");
   },
 
-  delete(userId: string, actorId: string): void {
+  async delete(userId: string, actorId: string): Promise<void> {
     if (userId === actorId) {
       throw ApiError.badRequest("Não é possível excluir o próprio usuário");
     }
 
-    const existing = userRepository.findById(userId);
+    const existing = await userRepository.findById(userId);
     if (!existing) {
       throw ApiError.notFound("Usuário não encontrado");
     }
 
-    userRepository.delete(userId);
+    await userRepository.delete(userId);
   },
 };

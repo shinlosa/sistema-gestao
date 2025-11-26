@@ -1,314 +1,226 @@
+# Sistema de Reservas de Sala - NAMI UNIFOR
 
-# Sistema de Gestão de Reservas de Salas - NAMI UNIFOR
+Aplicação web para gerenciamento das salas do NAMI/UNIFOR. O sistema permite visualizar a disponibilidade, reservar horários e acompanhar logs de atividade, com um backend em Node.js conectado a um banco de dados MySQL.
 
-> Sistema web para gerenciamento automatizado das salas do Núcleo de Atenção Médica Integrada (NAMI) do curso de Nutrição da Universidade de Fortaleza.
+## Stack
 
-[![React](https://img.shields.io/badge/React-18.3.1-61DAFB?logo=react)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js)](https://nodejs.org/)
-[![Express](https://img.shields.io/badge/Express-4.21-000000?logo=express)](https://expressjs.com/)
+- **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS + ShadCN/UI
+- **Backend:** Node.js 20 + Express + TypeScript + Zod
+- **Banco de Dados:** MySQL 8.0+
+- **Autenticação:** JWT com bcrypt para senhas
 
-## 📋 Sumário
+## Estrutura do Projeto
 
-- [Sobre o Projeto](#-sobre-o-projeto)
-- [Stack Tecnológica](#-stack-tecnológica)
-- [Características](#-características)
-- [Pré-requisitos](#-pré-requisitos)
-- [Instalação e Execução](#-instalação-e-execução)
-- [Credenciais de Teste](#-credenciais-de-teste)
-- [Grade de Horários](#-grade-de-horários)
-- [Organização das Salas](#-organização-das-salas)
-- [API REST](#-api-rest)
-- [Estrutura do Projeto](#-estrutura-do-projeto)
-- [Documentação](#-documentação)
+\`\`\`
+sistema-gestao/
+├── frontend/               # Aplicação React (Vite)
+│   ├── src/
+│   │   ├── components/    # Componentes UI (ShadCN)
+│   │   ├── features/      # Módulos por funcionalidade
+│   │   ├── data/          # Dados de configuração
+│   │   ├── lib/           # Utilitários e API client
+│   │   └── types/         # Tipos TypeScript
+│   ├── build/             # Artefatos de produção
+│   ├── package.json
+│   └── vite.config.ts
+│
+├── backend/                # API Express
+│   ├── src/
+│   │   ├── config/        # Configurações (DB, ambiente)
+│   │   ├── controllers/   # Controladores HTTP
+│   │   ├── middleware/    # Middlewares Express
+│   │   ├── repositories/  # Acesso a dados (MySQL/InMemory)
+│   │   ├── routes/        # Definição de rotas
+│   │   ├── services/      # Lógica de negócio
+│   │   ├── schemas/       # Validação Zod
+│   │   ├── types/         # Tipos TypeScript
+│   │   └── utils/         # Utilitários
+│   ├── database/          # Scripts SQL
+│   │   └── nami_schema.sql
+│   └── package.json
+│
+├── package.json            # Monorepo scripts
+├── README.md
+└── REQUISITOS.md
+\`\`\`
 
-## 🎯 Sobre o Projeto
+## Pré-requisitos
 
-O Sistema de Gestão de Reservas de Salas foi desenvolvido para automatizar e otimizar o processo de reserva das salas do curso de Nutrição no NAMI/UNIFOR, substituindo o controle manual via planilhas Excel. O sistema elimina conflitos de agendamento, garante rastreabilidade completa e oferece uma interface intuitiva para gestão de recursos.
+- Node.js 20+
+- npm 10+
+- MySQL 8.0+ (opcional - sistema funciona com dados em memória)
 
-### Principais Objetivos
-- ✅ Eliminar conflitos de reservas
-- ✅ Automatizar agendamento de salas
-- ✅ Rastrear todas as ações no sistema
-- ✅ Controlar acesso com diferentes níveis de permissão
-- ✅ Otimizar utilização dos espaços físicos
+## Instalação
 
-## 🛠️ Stack Tecnológica
-
-### Frontendt 18.3.1** - Biblioteca UI com hooks modernos
-- **TypeScript 5.6** - Tipagem estática
-- **Vite** - Build tool ultrarrápido
-- **Tailwind CSS** - Framework CSS utility-first
-- **ShadCN/UI** - Biblioteca de componentes baseada em Radix UI
-- **React Hook Form** - Gerenciamento de formulários
-- **Sonner** - Toast notifications
-- **React Day Picker** - Seletor de datas
-
-### Backend
-- **Node.js 20+** - Runtime JavaScript
-- **Express 4.21** - Framework web minimalista
-- **TypeScript 5.6** - Tipagem em todo o backend
-- **Zod 3.23** - Validação de schemas
-- **JWT** - Autenticação com tokens
-- **Helmet** - Security headers
-- **CORS** - Cross-origin resource sharing
-
-## ✨ Características
-
-### 🔐 Controle de Acesso
-- 4 níveis de permissão (admin, editor, usuario, leitor)
-- Autenticação JWT com token persistido
-- Cores distintivas por role
-- Proteção de rotas e ações
-
-### 📅 Gestão de Reservas
-- Sistema de blocos combinados (5 blocos de 100min)
-- Seleção múltipla de períodos
-- Validação automática de conflitos
-- Modal intuitivo com calendário integrado
-- Edição e cancelamento com rastreabilidade
-
-### 🏢 Organização de Salas
-- 18 salas em 3 monitoramentos
-- Status em tempo real
-- Busca e filtros
-- Visualização por monitoramento ou salas independentes
-
-### 👥 Gerenciamento de Usuários
-- Dashboard com métricas
-- Aprovação de solicitações
-- Alteração de roles
-- Log completo de atividades
-
-### 📊 Log de Atividades
-- Registro automático de ações
-- Timestamps humanizados
-- Filtros avançados
-- Rastreabilidade completa
-
-## 📦 Pré-requisitos
-
-- [Node.js](https://nodejs.org/) versão 20 ou superior
-- [npm](https://www.npmjs.com/) versão 10 ou superior
-
-Verifique as versões:
-```bash
-node --version  # v20.x.x ou superior
-npm --version   # 10.x.x ou superior
-```
-
-## 🚀 Instalação e Execução
-
-### 1️⃣ Clone o Repositório
-```bash
+\`\`\`bash
+# Clonar o repositório
 git clone https://github.com/shinlosa/sistema-gestao.git
 cd sistema-gestao
-```
 
-### 2️⃣ Configure Variáveis de Ambiente
+# Instalar dependências da raiz (para scripts do monorepo)
+npm install
 
-**Frontend (.env na raiz):**
-```bash
-cp .env.example .env
-```
-```env
+# Instalar dependências do frontend e backend
+npm run install:all
+# ou manualmente:
+cd frontend && npm install
+cd ../backend && npm install
+\`\`\`
+
+## Configuração
+
+### Frontend
+
+Copie o arquivo de exemplo e configure:
+
+\`\`\`bash
+cp frontend/.env.example frontend/.env
+\`\`\`
+
+\`\`\`env
 VITE_API_BASE_URL=http://localhost:3333/api
-```
+\`\`\`
 
-**Backend (backend/.env):**
-```bash
-cd backend
-cp .env.example .env
-```
-```env
+### Backend
+
+Copie o arquivo de exemplo e configure:
+
+\`\`\`bash
+cp backend/.env.example backend/.env
+\`\`\`
+
+\`\`\`env
 PORT=3333
 NODE_ENV=development
-CORS_ORIGINS=http://localhost:5173
-JWT_SECRET=dev-secret-change-in-production
-JWT_EXPIRES_IN=3600
-```
+CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+JWT_SECRET=seu_segredo_jwt_aqui
 
-⚠️ **Importante:** Em produção, altere `JWT_SECRET`.
+# Banco de dados (opcional)
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=sua_senha
+DB_DATABASE=nami_gestao
+\`\`\`
 
-### 3️⃣ Instale Dependências
+### Banco de Dados (Opcional)
 
-```bash
-# Frontend (na raiz)
-npm install
+Para usar MySQL ao invés de dados em memória:
 
-# Backend
-cd backend
-npm install
-```
+\`\`\`bash
+# Criar banco e tabelas
+mysql -u root -p < backend/database/nami_schema.sql
+\`\`\`
 
-### 4️⃣ Execute o Projeto
+O sistema detecta automaticamente se o banco está disponível. Caso contrário, usa repositórios em memória.
 
-**Terminal 1 - Backend:**
-```bash
-cd backend
+## Executando
+
+### Desenvolvimento (ambos simultaneamente)
+
+\`\`\`bash
 npm run dev
-# Backend em http://localhost:3333
-```
+\`\`\`
 
-**Terminal 2 - Frontend:**
-```bash
-npm run dev
-# Frontend em http://localhost:5173
-```
+### Frontend apenas
 
-### 5️⃣ Acesse
-```
-http://localhost:5173
-```
+\`\`\`bash
+npm run dev:frontend
+# ou
+cd frontend && npm run dev
+# Acessa em http://localhost:3000
+\`\`\`
 
-## 🔑 Credenciais de Teste
+### Backend apenas
 
-| Role | Cor | Usuário | Senha | Permissões |
-|:----:|:---:|:-------:|:-----:|:-----------|
-| 🟣 **Administrador** | Roxo | `admin.nami` | `NAMI@2025!` | Acesso total ao sistema |
-| 🔵 **Editor** | Azul | `coord.nutricao` | `Nutri@123` | Criar/editar/cancelar reservas, ver logs |
-| 🟢 **Usuário** | Verde | `flavia.prof` | `Prof@456` | Criar reservas, solicitar revisões |
-| ⚪ **Leitor** | Cinza | `leitor.nami` | `Leitor@789` | Apenas visualizar |
+\`\`\`bash
+npm run dev:backend
+# ou
+cd backend && npm run dev
+# API em http://localhost:3333
+\`\`\`
+
+### Produção
+
+\`\`\`bash
+# Build de ambos
+npm run build
+
+# Iniciar backend
+npm run start:backend
+\`\`\`
+
+## Dados de Exemplo
+
+### Salas
+
+- **Salas 1-5:** Monitoramento 1 (capacidade 8 pessoas)
+- **Salas 6-10:** Monitoramento 2 (capacidade 10 pessoas)
+- **Salas 11, 14-17:** Monitoramento 3 (capacidade 6-8 pessoas)
+- **Salas 12-13:** Independentes (capacidade 12 e 25 pessoas)
+- **Salas 101-103:** Escritórios de monitoramento (capacidade 2 pessoas)
+
+### Grade Horária
+
+5 blocos combinados de 100 minutos cada:
+
+| Bloco | Período | Horário |
+|-------|---------|---------|
+| MAB | Manhã | 07:30 - 09:10 |
+| MCD | Manhã | 09:30 - 11:10 |
+| MEF | Manhã | 11:20 - 13:00 |
+| TAB | Tarde | 13:30 - 15:10 |
+| TCD | Tarde | 15:30 - 17:10 |
+
+## Credenciais de Acesso
+
+| Role | Usuário | Senha | Permissões |
+|------|---------|-------|------------|
+| Admin | \`admin.nami\` | \`NAMI@2025!\` | Acesso total |
+
+> **Nota:** Apenas o usuário admin é criado no seed. Outros usuários podem ser criados via sistema.
 
 ### Matriz de Permissões
 
 | Ação | Admin | Editor | Usuário | Leitor |
-|:-----|:-----:|:------:|:-------:|:------:|
-| Visualizar salas | ✅ | ✅ | ✅ | ✅ |
-| Criar reserva | ✅ | ✅ | ✅ | ❌ |
-| Editar reserva | ✅ | ✅ | ❌ | ❌ |
-| Cancelar reserva | ✅ | ✅ | ❌ | ❌ |
-| Solicitar revisão | ✅ | ✅ | ✅ | ❌ |
-| Ver logs | ✅ | ✅ | ❌ | ❌ |
-| Gerenciar usuários | ✅ | ❌ | ❌ | ❌ |
+|------|-------|--------|---------|--------|
+| Visualizar salas | ✓ | ✓ | ✓ | ✓ |
+| Criar reserva | ✓ | ✓ | ✓ | ✗ |
+| Editar reserva | ✓ | ✓ | ✗ | ✗ |
+| Cancelar reserva | ✓ | ✓ | ✗ | ✗ |
+| Visualizar logs | ✓ | ✓ | ✗ | ✗ |
+| Gerenciar usuários | ✓ | ✗ | ✗ | ✗ |
 
-## ⏰ Grade de Horários
+## API Endpoints
 
-Sistema de **blocos combinados** - cada bloco combina 2 períodos de 50min (total: 100min):
+Consulte a documentação completa em [\`backend/API.md\`](backend/API.md).
 
-| ID | Bloco | Horário | Período | Duração |
-|:--:|:-----:|:-------:|:-------:|:-------:|
-| **MAB** | Manhã A+B | 07:30 - 09:10 | Matutino | 100min |
-| **MCD** | Manhã C+D | 09:30 - 11:10 | Matutino | 100min |
-| **MEF** | Manhã E+F | 11:20 - 13:00 | Matutino | 100min |
-| **TAB** | Tarde A+B | 13:30 - 15:10 | Vespertino | 100min |
-| **TCD** | Tarde C+D | 15:30 - 17:10 | Vespertino | 100min |
+### Principais Rotas
 
-✅ Seleção múltipla e não-sequencial  
-✅ Validação automática de conflitos  
-✅ Cálculo automático da faixa horária
+\`\`\`
+POST   /api/auth/login          # Autenticação
+POST   /api/auth/logout         # Logout
+GET    /api/nami/rooms          # Listar salas
+GET    /api/nami/bookings       # Listar reservas
+POST   /api/nami/bookings       # Criar reserva
+PUT    /api/nami/bookings/:id   # Editar reserva
+DELETE /api/nami/bookings/:id   # Cancelar reserva
+GET    /api/users               # Listar usuários (admin)
+\`\`\`
 
-## 🏢 Organização das Salas
+## Scripts Disponíveis
 
-### 18 Salas Total
+| Script | Descrição |
+|--------|-----------|
+| \`npm run dev\` | Inicia frontend e backend simultaneamente |
+| \`npm run dev:frontend\` | Inicia apenas o frontend |
+| \`npm run dev:backend\` | Inicia apenas o backend |
+| \`npm run build\` | Build de produção (ambos) |
+| \`npm run build:frontend\` | Build apenas do frontend |
+| \`npm run build:backend\` | Build apenas do backend |
+| \`npm run start:backend\` | Inicia backend em produção |
+| \`npm run lint\` | Executa linter no backend |
 
-**Monitoramento 1** (Dra. Maria Silva)
-- Salas 1-5 (8 pessoas cada)
-- Sala 101 - Escritório (2 pessoas)
+## Licença
 
-**Monitoramento 2** (Dr. João Santos)
-- Salas 6-10 (10 pessoas cada)
-- Sala 102 - Escritório (2 pessoas)
-
-**Monitoramento 3** (Dra. Ana Costa)
-- Salas 11-15 (12 pessoas cada)
-- Sala 103 - Escritório (2 pessoas)
-
-## 🔌 API REST
-
-### Base URL
-```
-http://localhost:3333/api
-```
-
-### Principais Endpoints
-
-**Autenticação:**
-```http
-POST   /auth/login
-GET    /auth/users
-```
-
-**Salas:**
-```http
-GET    /nami/rooms
-GET    /nami/monitorings
-```
-
-**Reservas:**
-```http
-GET    /nami/bookings
-POST   /nami/bookings
-PUT    /nami/bookings/:id
-DELETE /nami/bookings/:id
-```
-
-**Usuários:**
-```http
-PATCH  /users/:id/role
-POST   /users/:id/approve
-DELETE /users/:id
-```
-
-**Logs:**
-```http
-GET    /nami/activity-logs
-GET    /nami/revision-requests
-```
-
-🔒 Autenticação: `Authorization: Bearer <token>`
-
-📖 **Documentação completa:** [`backend/API.md`](backend/API.md)
-
-## 📁 Estrutura do Projeto
-
-```
-sistema-gestao/
-├── backend/                 # API Node.js + Express
-│   ├── src/
-│   │   ├── controllers/    # Controllers REST
-│   │   ├── services/       # Lógica de negócio
-│   │   ├── repositories/   # Camada de dados
-│   │   ├── routes/         # Definição de rotas
-│   │   ├── middleware/     # Middlewares
-│   │   ├── schemas/        # Validação Zod
-│   │   └── types/          # Tipos TypeScript
-│   └── API.md
-│
-├── src/                     # Frontend React
-│   ├── features/           # Organização por features
-│   │   ├── auth/          # Autenticação
-│   │   ├── bookings/      # Reservas
-│   │   ├── rooms/         # Salas
-│   │   ├── users/         # Usuários
-│   │   └── activity/      # Logs
-│   ├── components/ui/     # Componentes ShadCN/UI
-│   ├── lib/               # Utilitários (api.ts)
-│   └── types/             # Tipos TypeScript
-│
-├── .env.example
-├── package.json
-├── README.md
-├── REQUISITOS.md           # Requisitos detalhados
-└── vite.config.ts
-```
-
-## 📚 Documentação
-
-- 📋 **[REQUISITOS.md](REQUISITOS.md)** - Requisitos funcionais e não-funcionais
-- 🔌 **[backend/API.md](backend/API.md)** - Documentação da API REST
-- 📖 **[documentacao-projeto-nami.md](src/documentacao-projeto-nami.md)** - Documentação técnica
-- 📄 **[Projeto NAMI.pdf](https://github.com/user-attachments/files/23780508/Projeto.NAMI.1.pdf)** - Documentação oficial
-
----
-
-<div align="center">
-
-**Sistema de Gestão de Reservas de Salas - NAMI UNIFOR**
-
-© 2025 NAMI - Núcleo de Atenção Médica Integrada | Universidade de Fortaleza
-
-</div>
-
-## Dados de exemplo (Mantido para referência)
-ℹ️ **Nota:** Os dados são mantidos em memória durante a execução. Reiniciar o servidor limpa os dados.
+MIT

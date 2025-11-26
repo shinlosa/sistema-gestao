@@ -35,10 +35,10 @@ export const authController = {
       return next(error);
     }
   },
-  logout: (request: Request, response: Response) => {
+  logout: async (request: Request, response: Response) => {
     const actorId = request.user?.id ?? "";
     if (actorId) {
-      activityLogService.register(
+      await activityLogService.register(
         "Logout",
         `Usuário desconectado: ${request.user?.name ?? actorId}`,
         actorId,
