@@ -66,3 +66,5 @@ O sistema possui 4 níveis de acesso com cores distintivas:
 | Cancelar reserva | ✓ | ✓ | ✗ | ✗ |
 | Visualizar logs de atividade | ✓ | ✓ | ✗ | ✗ |
 | Gerenciar usuários | ✓ | ✗ | ✗ | ✗ |
+
+Documentação Completa: [Projeto NAMI (1).pdf](https://github.com/user-attachments/files/23780508/Projeto.NAMI.1.pdf)
