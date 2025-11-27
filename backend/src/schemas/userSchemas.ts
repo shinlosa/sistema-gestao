@@ -12,7 +12,7 @@ const baseUserFields = {
   email: z.string().trim().email("Email inválido"),
   role: z.enum(["admin", "editor", "usuario", "leitor"]),
   department: z.string().trim().max(100).optional(),
-  status: z.enum(["active", "pending", "inactive"]).optional(),
+  status: z.enum(["active", "pending", "inactive", "suspended"]).optional(),
 };
 
 export const createUserSchema = z.object(baseUserFields);
@@ -23,7 +23,7 @@ export const updateUserSchema = z
     email: z.string().trim().email().optional(),
     role: z.enum(["admin", "editor", "usuario", "leitor"]).optional(),
     department: z.string().trim().max(100).optional(),
-  status: z.enum(["active", "pending", "inactive"]).optional(),
+    status: z.enum(["active", "pending", "inactive", "suspended"]).optional(),
     password: baseUserFields.password.optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {

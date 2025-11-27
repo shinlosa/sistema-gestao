@@ -115,6 +115,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ username, password }),
     }),
+  me: () => apiFetch<{ user: ApiUser }>("/auth/me"),
   getMonitorings: () => apiFetch<MonitoringsResponse>("/nami/monitorings"),
   getRooms: () => apiFetch<RoomsResponse>("/nami/rooms"),
   getBookings: () => apiFetch<BookingsResponse>("/nami/bookings"),

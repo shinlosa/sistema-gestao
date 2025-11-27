@@ -65,7 +65,7 @@ export default function App() {
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     user: null,
-    loading: false,
+    loading: true, // Começa como true para verificar token salvo
   });
   const [users, setUsers] = useState<User[]>(() => fallbackUsers.map((user) => ({ ...user })));
   const [monitorings, setMonitorings] = useState<Monitoring[]>(() =>
@@ -90,6 +90,39 @@ export default function App() {
   const canEditBookings = ["admin", "editor"].includes(userRole);
   // Only admins and editors can access activity logs
   const canAccessLogs = ["admin", "editor"].includes(userRole);
+
+  // Verificar token salvo ao carregar a página
+  useEffect(() => {
+    const checkSavedToken = async () => {
+      const savedToken = localStorage.getItem("nami-auth-token");
+      if (!savedToken) {
+        setAuthState({ isAuthenticated: false, user: null, loading: false });
+        return;
+      }
+
+      try {
+        const { user } = await api.me();
+        const authenticatedUser: User = {
+          ...user,
+          createdAt: new Date(user.createdAt),
+          lastLogin: user.lastLogin ? new Date(user.lastLogin) : undefined,
+          approvedAt: user.approvedAt ? new Date(user.approvedAt) : undefined,
+        };
+        setAuthState({
+          isAuthenticated: true,
+          user: authenticatedUser,
+          token: savedToken,
+          loading: false,
+        });
+      } catch {
+        // Token inválido ou expirado
+        localStorage.removeItem("nami-auth-token");
+        setAuthState({ isAuthenticated: false, user: null, loading: false });
+      }
+    };
+
+    checkSavedToken();
+  }, []);
 
   const fetchBookings = useCallback(async () => {
     const res = await api.getBookings();
@@ -351,6 +384,20 @@ export default function App() {
       room.name.toLowerCase().includes(query),
     );
   }, [independentRooms, searchTerm]);
+
+  // Se estiver carregando (verificando token), mostrar loading
+  if (authState.loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-blue-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-lg mb-4 animate-pulse">
+            <div className="text-white text-xl font-bold">N</div>
+          </div>
+          <p className="text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Se não estiver autenticado, mostrar tela de login
   if (!authState.isAuthenticated) {

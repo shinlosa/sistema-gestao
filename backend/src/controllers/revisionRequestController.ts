@@ -49,7 +49,7 @@ const create = (req: Request<unknown, unknown, CreateRevisionRequestBody>, res: 
   res.status(201).json({ request });
 };
 
-const approve = async (req: Request, res: Response, next: NextFunction) => {
+const approve = (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   const request = revisionRequests.find((r) => r.id === id);
   if (!request) return next(ApiError.notFound("Solicitação não encontrada"));
@@ -58,8 +58,8 @@ const approve = async (req: Request, res: Response, next: NextFunction) => {
   // Atualiza a reserva correspondente: procura uma reserva existente no mesmo dia e sala que conflita
   // Estratégia simples: se existir uma reserva da sala no mesmo date (ISO yyyy-mm-dd) com conflito de slots, atualiza para os slots da revisão.
   const isoDay = new Date(request.date).toISOString().split("T")[0];
-  const byRoomAndDate = await bookingRepository.listByRoomAndDate(request.roomId, isoDay);
-  const conflict = byRoomAndDate.find((b) => b.status !== "cancelled" && b.timeSlots.some((s: string) => request.timeSlots.includes(s)));
+  const byRoomAndDate = bookingRepository.listByRoomAndDate(request.roomId, isoDay);
+  const conflict = byRoomAndDate.find((b) => b.status !== "cancelled" && b.timeSlots.some((s) => request.timeSlots.includes(s)));
 
   if (conflict) {
     const updated = {
@@ -71,10 +71,10 @@ const approve = async (req: Request, res: Response, next: NextFunction) => {
       notes: conflict.notes,
       status: "confirmed" as const,
     };
-    await bookingRepository.update(updated);
+    bookingRepository.update(updated);
   } else {
     // Não havia reserva (ou já foi cancelada); cria nova confirmada
-    await bookingRepository.create({
+    bookingRepository.create({
       id: "",
       roomId: request.roomId,
       roomNumber: request.roomNumber,
@@ -91,19 +91,19 @@ const approve = async (req: Request, res: Response, next: NextFunction) => {
   }
 
   if (req.user) {
-    await activityLogService.registerRevisionApproval(req.user.id, request);
+    activityLogService.registerRevisionApproval(req.user.id, request);
   }
 
   res.json({ request });
 };
 
-const reject = async (req: Request, res: Response, next: NextFunction) => {
+const reject = (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   const request = revisionRequests.find((r) => r.id === id);
   if (!request) return next(ApiError.notFound("Solicitação não encontrada"));
   request.status = "rejected";
   if (req.user) {
-    await activityLogService.registerRevisionRejection(req.user.id, request);
+    activityLogService.registerRevisionRejection(req.user.id, request);
   }
   res.json({ request });
 };

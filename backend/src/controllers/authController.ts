@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
-import { activityLogService } from "../services/activityLogService.js";
 import { authService } from "../services/authService.js";
+import { userRepository } from "../repositories/index.js";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Usuário é obrigatório"),
@@ -35,18 +35,24 @@ export const authController = {
       return next(error);
     }
   },
-  logout: async (request: Request, response: Response) => {
-    const actorId = request.user?.id ?? "";
-    if (actorId) {
-      await activityLogService.register(
-        "Logout",
-        `Usuário desconectado: ${request.user?.name ?? actorId}`,
-        actorId,
-        actorId,
-        request.ip,
-        String(request.headers["user-agent"] ?? ""),
-      );
+
+  me: async (request: Request, response: Response, next: NextFunction) => {
+    try {
+      const userId = request.user?.id;
+      if (!userId) {
+        return response.status(401).json({ message: "Não autenticado" });
+      }
+
+      const user = userRepository.findById(userId);
+      if (!user) {
+        return response.status(401).json({ message: "Usuário não encontrado" });
+      }
+
+      // Retornar usuário sem a senha
+      const { password: _p, passwordHash: _h, ...userWithoutPassword } = user as Record<string, unknown>;
+      return response.status(200).json({ user: userWithoutPassword });
+    } catch (error) {
+      return next(error);
     }
-    return response.status(204).send();
   },
 };

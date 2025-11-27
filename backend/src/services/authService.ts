@@ -15,7 +15,7 @@ const omitPassword = (user: User): Omit<User, "passwordHash"> => {
 
 export const authService = {
   login: async (username: string, password: string): Promise<LoginResult | null> => {
-    const user = await userRepository.findByUsername(username);
+    const user = userRepository.findByUsername(username);
 
     if (!user || user.status !== "active") {
       return null;
@@ -33,7 +33,7 @@ export const authService = {
       lastLogin: loginTimestamp,
     };
 
-    await userRepository.update(userWithLastLogin);
+    userRepository.update(userWithLastLogin);
 
     const token = tokenUtils.sign({
       sub: user.id,

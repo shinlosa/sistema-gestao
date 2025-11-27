@@ -2,10 +2,10 @@ import { bookingRepository, monitoringRepository, roomRepository, timeSlotReposi
 import { NAMIBooking, NAMIRoom, TimeSlot, Monitoring } from "../types/nami.js";
 
 export const namiService = {
-  listTimeSlots: async (): Promise<TimeSlot[]> => await timeSlotRepository.list(),
-  listMonitorings: async (): Promise<Monitoring[]> => await monitoringRepository.list(),
-  listRooms: async (): Promise<NAMIRoom[]> => await roomRepository.list(),
-  getRoomById: async (roomId: string): Promise<NAMIRoom | undefined> => await roomRepository.findById(roomId),
-  listBookings: async (): Promise<NAMIBooking[]> => await bookingRepository.list(),
-  getBookingsByRoom: async (roomId: string): Promise<NAMIBooking[]> => await bookingRepository.listByRoom(roomId),
+  listTimeSlots: (): TimeSlot[] => timeSlotRepository.list(),
+  listMonitorings: (): Monitoring[] => monitoringRepository.list(),
+  listRooms: (): NAMIRoom[] => roomRepository.list(),
+  getRoomById: (roomId: string): NAMIRoom | undefined => roomRepository.findById(roomId),
+  listBookings: (): NAMIBooking[] => bookingRepository.list(),
+  getBookingsByRoom: (roomId: string): NAMIBooking[] => bookingRepository.listByRoom(roomId),
 };

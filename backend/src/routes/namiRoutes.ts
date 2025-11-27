@@ -3,18 +3,17 @@ import { activityLogController } from "../controllers/activityLogController.js";
 import { revisionRequestController } from "../controllers/revisionRequestController.js";
 import { namiController } from "../controllers/namiController.js";
 import { authenticate, requireRole } from "../middleware/index.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
 
 const namiRouter = Router();
 
 namiRouter.use(authenticate);
 
-namiRouter.get("/monitorings", asyncHandler(namiController.listMonitorings));
-namiRouter.get("/rooms", asyncHandler(namiController.listRooms));
-namiRouter.get("/rooms/:roomId", asyncHandler(namiController.getRoom));
-namiRouter.get("/rooms/:roomId/bookings", asyncHandler(namiController.getBookingsByRoom));
-namiRouter.get("/bookings", asyncHandler(namiController.listBookings));
-namiRouter.get("/time-slots", asyncHandler(namiController.listTimeSlots));
+namiRouter.get("/monitorings", namiController.listMonitorings);
+namiRouter.get("/rooms", namiController.listRooms);
+namiRouter.get("/rooms/:roomId", namiController.getRoom);
+namiRouter.get("/rooms/:roomId/bookings", namiController.getBookingsByRoom);
+namiRouter.get("/bookings", namiController.listBookings);
+namiRouter.get("/time-slots", namiController.listTimeSlots);
 namiRouter.get(
   "/activity-logs",
   requireRole(["admin", "editor"]),
@@ -33,27 +32,27 @@ namiRouter.post(
 namiRouter.post(
 	"/revision-requests/:id/approve",
 	requireRole(["admin"]),
-	asyncHandler(revisionRequestController.approve),
+	revisionRequestController.approve,
 );
 namiRouter.post(
 	"/revision-requests/:id/reject",
 	requireRole(["admin"]),
-	asyncHandler(revisionRequestController.reject),
+	revisionRequestController.reject,
 );
 namiRouter.post(
 	"/bookings",
 	requireRole(["admin", "editor", "usuario"]),
-	asyncHandler(namiController.createBooking),
+	namiController.createBooking,
 );
 namiRouter.put(
 	"/bookings/:bookingId",
 	requireRole(["admin", "editor"]),
-	asyncHandler(namiController.updateBooking),
+	namiController.updateBooking,
 );
 namiRouter.delete(
 	"/bookings/:bookingId",
 	requireRole(["admin", "editor"]),
-	asyncHandler(namiController.cancelBooking),
+	namiController.cancelBooking,
 );
 
 export { namiRouter };

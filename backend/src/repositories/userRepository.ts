@@ -1,13 +1,10 @@
-import { User, UserStatus } from "../types/nami.js";
+import { User } from "../types/nami.js";
 
 export interface UserRepository {
-  findById(id: string): Promise<User | undefined>;
-  findByUsername(username: string): Promise<User | undefined>;
-  findByEmail(email: string): Promise<User | undefined>;
-  list(): Promise<User[]>;
-  listByStatus(status: UserStatus): Promise<User[]>;
-  create(user: User): Promise<User>;
-  update(user: User): Promise<User>;
-  updateLastLogin(id: string): Promise<void>;
-  delete(id: string): Promise<void>;
+  findById(id: string): User | undefined;
+  findByUsername(username: string): User | undefined;
+  list(): User[];
+  create(user: User): User;
+  update(user: User): User;
+  delete(id: string): void;
 }

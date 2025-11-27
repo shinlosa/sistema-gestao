@@ -54,13 +54,11 @@ export interface ActivityLog {
   details: string;
   timestamp: string;
   affectedResource?: string;
-  ipAddress?: string;
-  userAgent?: string;
 }
 
 export type UserRole = "admin" | "editor" | "usuario" | "leitor";
 
-export type UserStatus = "active" | "pending" | "inactive";
+export type UserStatus = "active" | "pending" | "inactive" | "suspended";
 
 export interface User {
   id: string;
