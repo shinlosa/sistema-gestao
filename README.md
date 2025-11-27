@@ -199,7 +199,7 @@ Consulte a documentação completa em [\`backend/API.md\`](backend/API.md).
 
 \`\`\`
 POST   /api/auth/login          # Autenticação
-POST   /api/auth/logout         # Logout
+GET    /api/auth/me             # Verificar sessão atual
 GET    /api/nami/rooms          # Listar salas
 GET    /api/nami/bookings       # Listar reservas
 POST   /api/nami/bookings       # Criar reserva
